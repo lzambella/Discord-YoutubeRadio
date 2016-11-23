@@ -240,3 +240,5 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/Discord-NetCore/src/Discord-NetCore/Properties/launchSettings.json
+/Discord-NetCore/src/Discord-NetCore/Properties/PublishProfiles
