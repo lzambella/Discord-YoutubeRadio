@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord.Commands;
 using Discord;
-namespace NetCoreBot.Modules
+using Discord.Commands;
+
+namespace Discord_NetCore.Modules
 {
-    [Module, Name("Text")]
-    public class TextModule
+    [Name("Text")]
+    public class TextModule : ModuleBase
     {
         [Command("poke"), Summary("Annoy someone")]
         public async Task Annoy(IUserMessage msg, [Summary("Mention")]string nickMention = null)
@@ -19,8 +19,8 @@ namespace NetCoreBot.Modules
             else
             {
                 var id = ulong.Parse(Program.Database.ParseString(nickMention));
-                var guild = await Program.Client.GetGuildAsync(msg.Channel.Id);
-                var userDM = await guild.GetUserAsync(id).Result.CreateDMChannelAsync();
+                var guild = Program.Client.GetGuild(msg.Channel.Id);
+                var userDM = await guild.GetUser(id).CreateDMChannelAsync();
                 for (var x = 0; x < 5; x++)
                     await userDM.SendMessageAsync("You are being annoying!!!! Get On!!!!", true);
             }
@@ -44,12 +44,12 @@ namespace NetCoreBot.Modules
             try
             {
                 var user = msg.Author as IGuildUser;
-                if (user.Roles.Count(role => role.Name.Equals("King")) > 0 || user.Id == Program.OwnerId)
+                if (user.Id == Program.OwnerId)
                 {
                     if (s == null)
                         return;
                     var num = Int32.Parse(s);
-                    var messages = await msg.Channel.GetMessagesAsync(num);
+                    var messages = await msg.Channel.GetMessagesAsync(num).Flatten();
                     await msg.Channel.DeleteMessagesAsync(messages);
                 }
             }

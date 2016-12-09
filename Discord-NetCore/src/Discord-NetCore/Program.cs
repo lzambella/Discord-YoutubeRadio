@@ -1,17 +1,20 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Audio;
 using Discord.Commands;
 using Discord.WebSocket;
-using System;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Collections.Generic;
+using NetCoreBot;
 
-namespace NetCoreBot
+namespace Discord_NetCore
 {
     public class Program
     {
+        // Create an IAudioClient, and store it for later use
+        public static IAudioClient Audio { get; set; }
         /// <summary>
         /// The Discord ID of the owner of the bot
         /// </summary>
@@ -32,7 +35,7 @@ namespace NetCoreBot
         /// Dictionary of all the arguments
         /// </summary>
         public static Dictionary<string, string> argv = new Dictionary<string, string>();
-
+        private DependencyMap map;
         /// <summary>
         /// Run the main program asynchronously
         /// </summary>
@@ -71,8 +74,9 @@ namespace NetCoreBot
             Console.WriteLine($"Token: {argv["DiscordToken"].Substring(5)}");
             Console.WriteLine($"Data: {argv["DataLocation"]}");
             Console.WriteLine("Logging into server");
+            var config = new DiscordSocketConfig {AudioMode = AudioMode.Outgoing};
 
-            Client = new DiscordSocketClient();
+            Client = new DiscordSocketClient(config);
             commands = new CommandService();
             await Client.LoginAsync(TokenType.Bot, argv["DiscordToken"]);
 
@@ -102,34 +106,29 @@ namespace NetCoreBot
             await Task.Delay(-1);
         }
 
-        /// <summary>
-        /// Installs the Discord Command Service
-        /// </summary>
-        /// <returns></returns>
         public async Task InstallCommands()
         {
+            // Hook the MessageReceived Event into our Command Handler
             Client.MessageReceived += HandleCommand;
-            await commands.LoadAssembly(Assembly.GetEntryAssembly());
+            // Discover all of the commands in this assembly and load them.
+            await commands.AddModulesAsync(Assembly.GetEntryAssembly());
         }
-
-        /// <summary>
-        /// Handler for executing a command
-        /// </summary>
-        /// <param name="paramMessage"></param>
-        /// <returns></returns>
-        public async Task HandleCommand(IMessage paramMessage)
+        public async Task HandleCommand(SocketMessage messageParam)
         {
-            var msg = paramMessage as IUserMessage;
-            if (msg == null) return;
-            var argPos = 0;
-            var currentUser = await Client.GetCurrentUserAsync();
-
-            if (msg.HasCharPrefix('!', ref argPos) || msg.HasMentionPrefix(currentUser, ref argPos))
-            {
-                var result = await commands.Execute(msg, argPos);
-                if (result.IsSuccess)
-                    Console.WriteLine($"{DateTime.Now.ToString()}: Command request from {msg.Author.Username}. Command: {msg.Content}");
-            }
+            // Don't process the command if it was a System Message
+            var message = messageParam as SocketUserMessage;
+            if (message == null) return;
+            // Create a number to track where the prefix ends and the command begins
+            int argPos = 0;
+            // Determine if the message is a command, based on if it starts with '!' or a mention prefix
+            if (!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(Client.CurrentUser, ref argPos))) return;
+            // Create a Command Context
+            var context = new CommandContext(Client, message);
+            // Execute the command. (result does not indicate a return value, 
+            // rather an object stating if the command executed succesfully)
+            var result = await commands.ExecuteAsync(context, argPos, map);
+            if (!result.IsSuccess)
+                await message.Channel.SendMessageAsync(result.ErrorReason);
         }
     }
 }

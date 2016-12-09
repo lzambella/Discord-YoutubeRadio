@@ -1,13 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
-using System.Collections.Generic;
 using NetCoreBot.Modules;
 
-namespace NetCoreBot
+namespace Discord_NetCore
 {
     public class DbHandler
     {
@@ -146,7 +146,7 @@ namespace NetCoreBot
                 }
                 if (!await IncrementPointAlgorithm())
                 {
-                    Console.WriteLine($"{DateTime.Now.ToString()}: Requirements not met!");
+                    Console.WriteLine($"{DateTime.Now}: Requirements not met!");
                     return;
                 }
 
@@ -161,8 +161,9 @@ namespace NetCoreBot
                 }
                 if (minute >= 30)
                 {
-                    var users = await Program.Client.GetGuildAsync(215339016755740673).Result.GetVoiceChannelAsync(215339863254368268).Result.GetUsersAsync();
-                    Console.WriteLine($"{DateTime.Now.ToString()}: It's Time! Adding points!");
+                    var usersAsync = Program.Client.GetGuild(215339016755740673).GetVoiceChannelAsync(215339863254368268).Result.GetUsersAsync();
+                    Console.WriteLine($"{DateTime.Now}: It's Time! Adding points!");
+                    var users = await usersAsync.Flatten();
                     foreach (var user in users)
                     {
                         if (SkipIncrement(user))
@@ -205,8 +206,9 @@ namespace NetCoreBot
         {
             try
             {
-                var users = await Program.Client.GetGuildAsync(215339016755740673).Result.GetVoiceChannelAsync(215339863254368268).Result.GetUsersAsync();
-                var userCount = users.Where(user => !user.IsBot).Count();
+                var usersAsync = Program.Client.GetGuild(215339016755740673).GetVoiceChannelAsync(215339863254368268).Result.GetUsersAsync();
+                var users = await usersAsync.Flatten();
+                var userCount = users.Count(user => !user.IsBot);
                 //Console.WriteLine($"There are {userCount} users.");
                 return userCount > 2;
             }
