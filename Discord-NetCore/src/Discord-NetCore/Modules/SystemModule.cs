@@ -48,7 +48,7 @@ namespace Discord_NetCore.Modules
         [Command("tail"), Summary("Print last 20 lines of the log file (admin only)")]
         public async Task tail()
         {
-            if (msg.Author.Id == Program.OwnerId)
+            if (Context.User.Id == Program.OwnerId)
             {
                 var process = new Process();
                 process.StartInfo.UseShellExecute = false;
