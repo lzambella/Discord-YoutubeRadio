@@ -127,8 +127,10 @@ namespace Discord_NetCore
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed succesfully)
             var result = await commands.ExecuteAsync(context, argPos, map);
+            /*
             if (!result.IsSuccess)
                 await message.Channel.SendMessageAsync(result.ErrorReason);
+            */
         }
     }
 }
