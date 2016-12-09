@@ -11,7 +11,7 @@ namespace Discord_NetCore.Modules
     public class SystemModule : ModuleBase
     {
         [Command("memory"), Summary("View avaliable memory")]
-        public async Task GetInfo(IUserMessage msg)
+        public async Task GetInfo()
         {
             var process = new Process();
             process.StartInfo.UseShellExecute = false;
@@ -21,18 +21,18 @@ namespace Discord_NetCore.Modules
             process.Start();
             var stdout = await process.StandardOutput.ReadToEndAsync();
             string output = $"```{stdout}```";
-            await msg.Channel.SendMessageAsync(output);
+            await ReplyAsync(output);
         }
 
         [Command("uptime"), Summary("Print how long the bot has been online")]
-        public async Task uptime(IUserMessage msg)
+        public async Task uptime()
         {
             var time = DateTime.Now - Process.GetCurrentProcess().StartTime;
-            await msg.Channel.SendMessageAsync($"I have been online for {time.Days}:{time.Hours}:{time.Minutes}:{time.Seconds}! [DD:HH:MM:SS]");
+            await ReplyAsync($"I have been online for {time.Days}:{time.Hours}:{time.Minutes}:{time.Seconds}! [DD:HH:MM:SS]");
         }
 
         [Command("sysinfo"), Summary("Print system information")]
-        public async Task hw(IUserMessage msg)
+        public async Task hw()
         {
             var process = new Process();
             process.StartInfo.UseShellExecute = false;
@@ -42,11 +42,11 @@ namespace Discord_NetCore.Modules
             process.Start();
             var stdout = await process.StandardOutput.ReadToEndAsync();
             string output = $"```{stdout}```";
-            await msg.Channel.SendMessageAsync(output);
+            await ReplyAsync(output);
         }
 
         [Command("tail"), Summary("Print last 20 lines of the log file (admin only)")]
-        public async Task tail(IUserMessage msg)
+        public async Task tail()
         {
             if (msg.Author.Id == Program.OwnerId)
             {
@@ -58,11 +58,11 @@ namespace Discord_NetCore.Modules
                 process.Start();
                 var stdout = await process.StandardOutput.ReadToEndAsync();
                 string output = $"```{stdout}```";
-                await msg.Channel.SendMessageAsync(output);
+                await ReplyAsync(output);
             }
         }
         [Command("help"), Summary("Prints help message")]
-        public async Task Help(IUserMessage msg,[Summary("(Optional) Command Name")]string c = null)
+        public async Task Help([Summary("(Optional) Command Name")]string c = null)
         {
             var str = "";
             var modules = Program.commands.Modules;
@@ -72,7 +72,7 @@ namespace Discord_NetCore.Modules
                 var command = commands.Single(com => com.Name.Equals(c));
                 if (command == null)
                 {
-                    await msg.Channel.SendMessageAsync("Unknown command");
+                    await ReplyAsync("Unknown command");
                     return;
                 }
                 var commandName = command.Name;
@@ -81,7 +81,7 @@ namespace Discord_NetCore.Modules
                 var paramString = "";
                 foreach (var parameter in commandParameters)
                     paramString += $"<{parameter.Summary}> ";
-                await msg.Channel.SendMessageAsync($"Name: `{commandName}`\nDescription: `{commandSummary}`\n" +
+                await ReplyAsync($"Name: `{commandName}`\nDescription: `{commandSummary}`\n" +
                                                    $"Usage: `!{commandName} {paramString}`");
             }
             else
@@ -93,7 +93,7 @@ namespace Discord_NetCore.Modules
                         str += $"`{command.Name}` ";
                     str += '\n';
                 }
-                await msg.Channel.SendMessageAsync("These are the commands you can use:\n" +
+                await ReplyAsync("These are the commands you can use:\n" +
                                                   $"{str}\n" +
                                                    "Type `!help <command>` for more info.");
 
