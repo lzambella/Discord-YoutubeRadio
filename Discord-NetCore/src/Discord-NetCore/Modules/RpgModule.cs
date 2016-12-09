@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord.Commands;
 using Discord;
-using System.Data.SqlClient;
-using System.Drawing;
-namespace NetCoreBot.Modules
+using Discord.Commands;
+using NetCoreBot;
+
+namespace Discord_NetCore.Modules
 {
-    [Module, Name("RPG")]
-    public class RpgModule
+    [Name("RPG")]
+    public class RpgModule : ModuleBase
     {
         [Command("register"), Summary("Register a new character")]
         public async Task Register(IUserMessage msg, [Summary("Name of your character")]string name = null)

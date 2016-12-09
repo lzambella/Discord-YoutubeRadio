@@ -1,16 +1,14 @@
-﻿using Discord;
-using Discord.Commands;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Reflection;
-using System.ComponentModel;
-namespace NetCoreBot.Modules
+using Discord;
+using Discord.Commands;
+
+namespace Discord_NetCore.Modules
 {
-    [Module, Name("System")]
-    public class SystemModule
+    [Name("System")]
+    public class SystemModule : ModuleBase
     {
         [Command("memory"), Summary("View avaliable memory")]
         public async Task GetInfo(IUserMessage msg)
@@ -71,13 +69,13 @@ namespace NetCoreBot.Modules
             var commands = Program.commands.Commands;
             if (c != null)
             {
-                var command = commands.Single(com => com.Text.Equals(c));
+                var command = commands.Single(com => com.Name.Equals(c));
                 if (command == null)
                 {
                     await msg.Channel.SendMessageAsync("Unknown command");
                     return;
                 }
-                var commandName = command.Text;
+                var commandName = command.Name;
                 var commandSummary = command.Summary;
                 var commandParameters = command.Parameters;
                 var paramString = "";
@@ -92,7 +90,7 @@ namespace NetCoreBot.Modules
                 {
                     str += $"{module.Name}: ";
                     foreach (var command in module.Commands)
-                        str += $"`{command.Text}` ";
+                        str += $"`{command.Name}` ";
                     str += '\n';
                 }
                 await msg.Channel.SendMessageAsync("These are the commands you can use:\n" +

@@ -1,17 +1,17 @@
-﻿using System.Threading.Tasks;
-using Discord;
-using Discord.Net;
-using Discord.Commands;
+﻿using System;
 using System.Data.SqlClient;
-using System;
 using System.Linq;
+using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
+using NetCoreBot;
 
-namespace NetCoreBot.Modules
+namespace Discord_NetCore.Modules
 {
-    [Module, Name("Bank")]
-    public class BankModule
+    [Name("Bank")] 
+    public class BankModule : ModuleBase
     {
-        DbHandler Database = Program.Database;
+        readonly DbHandler Database = Program.Database;
 
         [Command("bank"), Summary("Check your points")]
         public async Task Bank(IUserMessage msg)
@@ -21,7 +21,7 @@ namespace NetCoreBot.Modules
             await msg.Channel.SendMessageAsync($"{msg.Author.Mention}, you have {points} points.");
         }
         [Command("pointsleaderboard"), Summary("Check the leader boards")]
-        public async Task PointLeaderboard(IUserMessage msg)
+        public async Task PointLeaderboard()
         {
             try
             {
@@ -37,7 +37,7 @@ namespace NetCoreBot.Modules
                     {
                         try
                         {
-                            var users = await msg.Channel.GetUsersAsync();
+                            var users = await Context.Channel.GetUsersAsync().Flatten();
                             var username = users.Single(user => user.Id == ulong.Parse(reader[0].ToString())).Username.ToString();
                             board += $"{username} : {reader[1]} Points\n";
                         }
@@ -48,7 +48,7 @@ namespace NetCoreBot.Modules
                     }
                 }
                 board += "```";
-                await msg.Channel.SendMessageAsync(board);
+                await ReplyAsync(board);
             }
             catch (Exception ex)
             {
@@ -56,15 +56,15 @@ namespace NetCoreBot.Modules
             }
         }
         [Command("promote"), Summary("Spend some points to level up and get even more points.")]
-        public async Task Promote(IUserMessage msg)
+        public async Task Promote()
         {
-            var user = Program.Database.ParseString(msg.Author.Mention);
+            var user = Program.Database.ParseString(Context.User.Mention);
             var points = await Program.Database.GetPoints(user);
             var permission = await Program.Database.GetRank(user);
             var requiredPoints = (int)(Math.Pow(permission + 1, 2) + 5 * (permission + 1));
             if (points < requiredPoints)
                 await
-                    msg.Channel.SendMessageAsync($"You don't have enough points. You need {requiredPoints} points.");
+                    ReplyAsync($"You don't have enough points. You need {requiredPoints} points.");
             else
             {
                 var command =
@@ -74,23 +74,23 @@ namespace NetCoreBot.Modules
                 command.Parameters.Add(new SqlParameter("id", user));
                 await command.ExecuteNonQueryAsync();
                 await Program.Database.ChangePoints(user, requiredPoints * -1);
-                await msg.Channel.SendMessageAsync($"Promoted to level {permission + 1}");
+                await ReplyAsync($"Promoted to level {permission + 1}");
             }
         }
         [Command("exchange"), Summary("Convert your points to carlin coins(TM)")]
-        public async Task exchange(IUserMessage msg, string amount)
+        public async Task exchange(string amount)
         {
             try
             {
                 var points = Int32.Parse(amount);
                 Console.WriteLine(points);
-                var user = Program.Database.ParseString(msg.Author.Mention);
+                var user = Program.Database.ParseString(Context.User.Mention);
                 Console.WriteLine(user);
                 if (await Program.Database.GetPoints(user) < points)
-                    await msg.Channel.SendMessageAsync("You don't have that many points!");
+                    await ReplyAsync("You don't have that many points!");
                 else
                 {
-                    var bot = await Program.Client.GetGuildAsync(215339016755740673).Result.GetUserAsync(215688935030915073);
+                    var bot = Program.Client.GetGuild(215339016755740673).GetUser(215688935030915073);
                     var channel = await bot.CreateDMChannelAsync();
                     await channel.SendMessageAsync($"[{user} {points}]");
                 }
@@ -102,7 +102,7 @@ namespace NetCoreBot.Modules
 
         }
         [Command("rankleaderboard"), Summary("Check rank leader board")]
-        public async Task Rank(IUserMessage msg)
+        public async Task Rank()
         {
             try
             {
@@ -119,7 +119,7 @@ namespace NetCoreBot.Modules
                         try
                         {
                             board +=
-                                $"{msg.Channel.GetUserAsync(ulong.Parse(reader[0].ToString())).Result.Username} : Level {reader[1]}\n";
+                                $"{Context.Channel.GetUserAsync(ulong.Parse(reader[0].ToString())).Result.Username} : Level {reader[1]}\n";
 
                         }
                         catch (Exception ex)
@@ -129,7 +129,7 @@ namespace NetCoreBot.Modules
                     }
                 }
                 board += "```";
-                await msg.Channel.SendMessageAsync(board);
+                await ReplyAsync(board);
             }
             catch (Exception ex)
             {

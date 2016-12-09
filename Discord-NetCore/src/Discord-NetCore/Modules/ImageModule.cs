@@ -1,53 +1,57 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using System.IO;
-using Newtonsoft.Json;
-using System.Net;
 using NetCoreBot.Modules.facebook;
-using System.Threading;
+using Newtonsoft.Json;
 
-namespace NetCoreBot.Modules
+namespace Discord_NetCore.Modules
 {
-    [Module, Name("Images")]
-    public class ImageModule
+    [Name("Images")]
+    public class ImageModule : ModuleBase
     {
         /// <summary>
         /// Facebook API Token remove this
         /// </summary>
-        string token = Program.argv["FacebookToken"];
+        readonly string token = Program.argv["FacebookToken"];
         /// <summary>
         /// MEMES posting timer (every 30 minutes)
         /// </summary>
-        Timer timer { get; set; }
+        private Timer Timer { get; set; }
         /// <summary>
         /// Reference to the main DiscordClient objects to reduce code
         /// </summary>
         IDiscordClient client = Program.Client;
-        Random rand = new Random();
+
+        readonly Random rand = new Random();
+
         /// <summary>
         /// Stores 3000 of the latest memes so we dont have to keep requesting it from facebook
         /// </summary>
-        photojson Data { get; set; }
+        private photojson Data { get; set; }
+
         /// <summary>
         /// Check variable to see if there actually was a new meme
         /// </summary>
-        string LatestMeme { get; set; }
+        private string LatestMeme { get; set; }
+
 
         public ImageModule()
         {
-            var timeToHalf = ( (60 - DateTime.Now.Minute) % 30 ) * 10000;
-            timer = new Timer(ImagePoster, null, timeToHalf, 60000 * 30);
+            Timer = new Timer(ImagePoster, null, 0, 6000);
+            //timer = new Timer(ImagePoster2, null, 0, 5000);
         }
 
         [Command("thereal"), Summary("Post a random The Real image")]
-        public async Task Real(IUserMessage msg)
+        public async Task Real()
         {
             try
             {
-                await msg.Channel.SendFileAsync(RandomFile($"{Program.argv["DataLocation"]}/real"));
+                await Context.Channel.SendFileAsync(RandomFile($"{Program.argv["DataLocation"]}/real"));
             } catch (Exception e)
             {
                 Console.WriteLine(e);
@@ -63,23 +67,23 @@ namespace NetCoreBot.Modules
         }
 
         [Command("randomeme"), Summary("Get a random randomly generated meme")]
-        public async Task Memes(IUserMessage msg)
+        public async Task Memes()
         {
             try
             {
                 // If we already loaded the json
-                if (Data.data.Count() > 0)
+                if (Data != null && Data.data.Any())
                 {
                     var linkList = Data.data;
                     int randNum;
-                    object syncLock = new object();
+                    var syncLock = new object();
                     lock (syncLock)
                     {
                         randNum = rand.Next(linkList.Count);
                     }
                     var latestMemeLink = linkList[randNum].images.First().source;
 
-                    await msg.Channel.SendMessageAsync(latestMemeLink);
+                    await ReplyAsync(latestMemeLink);
                     return;
                 }
 
@@ -105,7 +109,7 @@ namespace NetCoreBot.Modules
                         Console.WriteLine(randNum);
                         var latestMemeLink = linkList[randNum].images.First().source;
 
-                        await msg.Channel.SendMessageAsync(latestMemeLink);
+                        await ReplyAsync(latestMemeLink);
                     }
                 }
             } catch (Exception e)
@@ -114,26 +118,46 @@ namespace NetCoreBot.Modules
             }
         }
         [Command("checkmeme"), Summary("Time until a new meme is avaliable")]
-        public async Task CheckMeme(IUserMessage msg)
+        public async Task CheckMeme()
         {
             try
             {
                 var timeRemaining = ((60 - DateTime.Now.Minute) % 30);
-                await msg.Channel.SendMessageAsync($"Time until the next meme: `{timeRemaining}`");
+                await ReplyAsync($"Time until the next meme: `{timeRemaining}`");
             } catch (Exception e)
             {
                 Console.WriteLine(e);
             }
         }
+        /*
+        public async void ImagePoster2(object callback)
+        {
+            var guild = await client.GetGuildAsync(217497297880088598);
+            //var voiceChannel = await guild.GetVoiceChannelAsync(215339863254368268);
+            //var users = await voiceChannel.GetUsersAsync();
+
+            //var userCount = users.Count(user => !user.IsBot);
+            //if (userCount < 2)
+            //return;
+            var textChannel = await guild.GetTextChannelAsync(217497297880088598);
+            var graphApi = new GraphApi(token, GraphApi.ApiVersion.TwoEight);
+            var pageHandler = new PageHandler(graphApi, "421109484727629");
+            var fields = new ApiField();
+            fields.Fields.Add("images");
+            var photos = await pageHandler.GetPhotos(fields, true);
+            var latestPhoto = photos.PhotoNodes[0].Images[0];
+            var latestLink = latestPhoto.Source;
+            await textChannel.SendMessageAsync($"Here's a new meme:\n{latestLink}");
+        }
+        */
         public async void ImagePoster(object callback)
         {
             try
             {
                 var guild = await client.GetGuildAsync(215339016755740673);
                 var voiceChannel = await guild.GetVoiceChannelAsync(215339863254368268);
-                var users = await voiceChannel.GetUsersAsync();
-
-                var userCount = users.Where(user => !user.IsBot).Count();
+                var users = await voiceChannel.GetUsersAsync().Flatten();
+                var userCount = users.Count(user => !user.IsBot);
                 if (userCount < 2)
                     return;
                 var textChannel = await guild.GetTextChannelAsync(215339016755740673);
