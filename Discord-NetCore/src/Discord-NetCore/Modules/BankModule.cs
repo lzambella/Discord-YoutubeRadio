@@ -4,28 +4,27 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using NetCoreBot;
 
 namespace Discord_NetCore.Modules
 {
     [Name("Bank")] 
     public class BankModule : ModuleBase
     {
-        readonly DbHandler Database = Program.Database;
+        private readonly DbHandler _database = Program.Database;
 
         [Command("bank"), Summary("Check your points")]
-        public async Task Bank(IUserMessage msg)
+        public async Task Bank()
         {
-            var userId = Database.ParseString(msg.Author.Mention);
-            var points = await Database.GetPoints(userId);
-            await msg.Channel.SendMessageAsync($"{msg.Author.Mention}, you have {points} points.");
+            var userId = _database.ParseString(Context.User.Mention);
+            var points = await _database.GetPoints(userId);
+            await ReplyAsync($"{Context.User.Mention}, you have {points} points.");
         }
         [Command("pointsleaderboard"), Summary("Check the leader boards")]
         public async Task PointLeaderboard()
         {
             try
             {
-                await Database.FixConnection();
+                await _database.FixConnection();
                 var board = "";
                 var command =
                     new SqlCommand(
@@ -38,7 +37,7 @@ namespace Discord_NetCore.Modules
                         try
                         {
                             var users = await Context.Channel.GetUsersAsync().Flatten();
-                            var username = users.Single(user => user.Id == ulong.Parse(reader[0].ToString())).Username.ToString();
+                            var username = users.Single(user => user.Id == ulong.Parse(reader[0].ToString())).Username;
                             board += $"{username} : {reader[1]} Points\n";
                         }
                         catch (Exception ex)
@@ -78,11 +77,11 @@ namespace Discord_NetCore.Modules
             }
         }
         [Command("exchange"), Summary("Convert your points to carlin coins(TM)")]
-        public async Task exchange(string amount)
+        public async Task Exchange(string amount)
         {
             try
             {
-                var points = Int32.Parse(amount);
+                var points = int.Parse(amount);
                 Console.WriteLine(points);
                 var user = Program.Database.ParseString(Context.User.Mention);
                 Console.WriteLine(user);
@@ -124,7 +123,7 @@ namespace Discord_NetCore.Modules
                         }
                         catch (Exception ex)
                         {
-                            // Console.WriteLine("User does not exist!");
+                            Console.WriteLine(ex);
                         }
                     }
                 }

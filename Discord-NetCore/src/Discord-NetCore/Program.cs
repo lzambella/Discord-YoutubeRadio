@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Audio;
 using Discord.Commands;
 using Discord.WebSocket;
-using NetCoreBot;
+using FacebookSharp;
+using FacebookSharp.GraphAPI.Fields;
 
 namespace Discord_NetCore
 {
@@ -24,7 +26,7 @@ namespace Discord_NetCore
         /// </summary>
         public static DbHandler Database { get; set; }
         /// <summary>
-        /// Discord COmmand Service
+        /// Discord Command Service
         /// </summary>
         public static CommandService commands;
         /// <summary>
@@ -36,12 +38,14 @@ namespace Discord_NetCore
         /// </summary>
         public static Dictionary<string, string> argv = new Dictionary<string, string>();
         private DependencyMap map;
+        private string LatestMeme { get; set; }
         /// <summary>
         /// Run the main program asynchronously
         /// </summary>
         /// <param name="args"></param>
         public static void Main(string[] args) => new Program().Start(args).GetAwaiter().GetResult();
 
+        private Timer Timer { get; set; }
         /// <summary>
         /// Main program
         /// </summary>
@@ -103,6 +107,7 @@ namespace Discord_NetCore
                     Console.WriteLine(ex);
                 }
             };
+            Timer = new Timer(ImagePoster, null, 6000, 6000);
             await Task.Delay(-1);
         }
 
@@ -131,6 +136,41 @@ namespace Discord_NetCore
             if (!result.IsSuccess)
                 await message.Channel.SendMessageAsync(result.ErrorReason);
             */
+        }
+
+        /// <summary>
+        /// Posts a random meme to the chat if there is a new meme
+        /// </summary>
+        /// <param name="callback"></param>
+        private async void ImagePoster(object callback)
+        {
+            try
+            {
+                string token = Program.argv["FacebookToken"];
+                IDiscordClient client = Program.Client;
+                var guild = await client.GetGuildAsync(215339016755740673);
+                var voiceChannel = await guild.GetVoiceChannelAsync(215339863254368268);
+                var users = await voiceChannel.GetUsersAsync().Flatten();
+                var userCount = users.Count(user => !user.IsBot);
+                if (userCount < 2)
+                    return;
+                var textChannel = await guild.GetTextChannelAsync(215339016755740673);
+                var graphApi = new GraphApi(token, GraphApi.ApiVersion.TwoEight);
+                var page = await graphApi.GetPage("421109484727629");
+                var param = new ApiField();
+                param.Fields.Add("images");
+                var images = await page.GetPhotos(param, true);
+                var meme = images.PhotoNodes.First().Images.First().Source;
+                if (meme.Equals(LatestMeme))
+                    return;
+
+                LatestMeme = meme;
+                await textChannel.SendMessageAsync($"Here's a new meme: {meme}");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
     }
 }

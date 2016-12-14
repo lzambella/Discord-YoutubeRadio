@@ -13,11 +13,16 @@ namespace Discord_NetCore.Modules
         [Command("memory"), Summary("View avaliable memory")]
         public async Task GetInfo()
         {
-            var process = new Process();
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.FileName = "/usr/bin/free";
-            process.StartInfo.Arguments = "-h";
+            var process = new Process
+            {
+                StartInfo =
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    FileName = "/usr/bin/free",
+                    Arguments = "-h"
+                }
+            };
             process.Start();
             var stdout = await process.StandardOutput.ReadToEndAsync();
             string output = $"```{stdout}```";
@@ -78,9 +83,7 @@ namespace Discord_NetCore.Modules
                 var commandName = command.Name;
                 var commandSummary = command.Summary;
                 var commandParameters = command.Parameters;
-                var paramString = "";
-                foreach (var parameter in commandParameters)
-                    paramString += $"<{parameter.Summary}> ";
+                var paramString = commandParameters.Aggregate("", (current, parameter) => current + $"<{parameter.Summary}> ");
                 await ReplyAsync($"Name: `{commandName}`\nDescription: `{commandSummary}`\n" +
                                                    $"Usage: `!{commandName} {paramString}`");
             }
@@ -89,8 +92,7 @@ namespace Discord_NetCore.Modules
                 foreach (var module in modules)
                 {
                     str += $"{module.Name}: ";
-                    foreach (var command in module.Commands)
-                        str += $"`{command.Name}` ";
+                    str = module.Commands.Aggregate(str, (current, command) => current + $"`{command.Name}` ");
                     str += '\n';
                 }
                 await ReplyAsync("These are the commands you can use:\n" +

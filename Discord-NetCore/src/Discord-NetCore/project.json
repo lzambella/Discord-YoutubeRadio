@@ -3,13 +3,13 @@
   "buildOptions": {
     "emitEntryPoint": true,
     "optimize": true,
-    "allowUnsafe": true 
+    "allowUnsafe": true
   },
 
   "dependencies": {
-    "Discord.Net": "1.0.0-beta2-00501",
-    "Discord.Net.Commands": "1.0.0-beta2-00501",
-    "FacebookSharp": "1.0.0",
+    "Discord.Net": "1.0.0-beta2-00502",
+    "Discord.Net.Commands": "1.0.0-beta2-00502",
+    "FacebookSharp": "1.0.2",
     "Microsoft.NETCore.App": {
       "type": "platform",
       "version": "1.0.0"
@@ -30,4 +30,5 @@
       "imports": "dnxcore50"
     }
   }
+     
 }

@@ -9,7 +9,7 @@ using NetCoreBot;
 
 namespace Discord_NetCore.Modules
 {
-    [Name("RPG")]
+    //[Name("RPG")]
     public class RpgModule : ModuleBase
     {
         [Command("register"), Summary("Register a new character")]
