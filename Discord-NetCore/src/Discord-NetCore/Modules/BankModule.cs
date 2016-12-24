@@ -136,6 +136,21 @@ namespace Discord_NetCore.Modules
             }
         }
 
+        [Command("add"), Summary("Add a user to the bank")]
+        public async Task Add(IGuildUser mention) 
+        {
+            try
+            {
+                var database = Program.Database;
+                await database.AddUser(mention);
+                await ReplyAsync($"Added {mention.Mention} to the bank.");
+            }
+            catch (Exception)
+            {
+                await ReplyAsync("Error adding user to bank.");
+            }
+        }
+
 
     }
 }

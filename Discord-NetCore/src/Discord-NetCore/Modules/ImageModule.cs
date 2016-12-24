@@ -26,8 +26,6 @@ namespace Discord_NetCore.Modules
         /// </summary>
         private photojson Data { get; set; }
 
-        private Timer _timer = new Timer(ImagePoster, null, 6000, 6000);
-        private static string LatestMeme { get; set; }
         [Command("thereal"), Summary("Post a random The Real image")]
         public async Task Real()
         {

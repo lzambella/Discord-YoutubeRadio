@@ -72,7 +72,6 @@ namespace Discord_NetCore.Modules
                 var fields = new ApiField();
                 fields.Fields.Add("name");
                 fields.Fields.Add("description");
-                fields.Fields.Add("religion");
                 var user = await api.GetUser(id);
                 var name = user.Name ?? "No name";
                 var description = user.About ?? "No description";
