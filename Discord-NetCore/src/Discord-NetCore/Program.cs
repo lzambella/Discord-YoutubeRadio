@@ -55,23 +55,32 @@ namespace Discord_NetCore
         {
             for (var i = 0; i < args.Length; i++)
             {
-                switch (args[i])
+
+                try
                 {
-                    case "-dbstring":
-                        argv.Add("ConnectionString", args[i + 1]);
-                        break;
-                    case "-token":
-                        argv.Add("DiscordToken", args[i + 1]);
-                        break;
-                    case "-data":
-                        argv.Add("DataLocation", args[i + 1]);
-                        break;
-                    case "-fbtoken":
-                        argv.Add("FacebookToken", args[i + 1]);
-                        break;
-                    case "-wolframtoken":
-                        argv.Add("WolframToken", args[i + 1]);
-                        break;
+                    switch (args[i])
+                    {
+                        case "-dbstring":
+                            argv.Add("ConnectionString", args[i + 1]);
+                            break;
+                        case "-token":
+                            argv.Add("DiscordToken", args[i + 1]);
+                            break;
+                        case "-data":
+                            argv.Add("DataLocation", args[i + 1]);
+                            break;
+                        case "-fbtoken":
+                            argv.Add("FacebookToken", args[i + 1]);
+                            break;
+                        case "-wolframtoken":
+                            argv.Add("WolframToken", args[i + 1]);
+                            break;
+                    }
+                }
+                catch (Exception)
+                {
+
+                    Console.WriteLine("Error in parsing arguments.");
                 }
             }
             Console.WriteLine($"Connection String: {argv["ConnectionString"].Substring(16)}");
@@ -146,14 +155,18 @@ namespace Discord_NetCore
         {
             try
             {
-                string token = Program.argv["FacebookToken"];
+                var token = Program.argv["FacebookToken"];
                 IDiscordClient client = Program.Client;
+                // Get the guild where the memes will be posted
                 var guild = await client.GetGuildAsync(215339016755740673);
                 var voiceChannel = await guild.GetVoiceChannelAsync(215339863254368268);
                 var users = await voiceChannel.GetUsersAsync().Flatten();
-                var userCount = users.Count(user => !user.IsBot);
+
+                // Check if there are 3 active users in the main voice channel
+                var userCount = users.Count(user => !user.IsBot && !user.IsMuted);
                 if (userCount < 2)
                     return;
+                // Get the latest meme and post it to the general chat
                 var textChannel = await guild.GetTextChannelAsync(215339016755740673);
                 var graphApi = new GraphApi(token, GraphApi.ApiVersion.TwoEight);
                 var page = await graphApi.GetPage("421109484727629");
