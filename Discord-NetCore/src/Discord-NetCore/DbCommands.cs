@@ -120,6 +120,28 @@ namespace Discord_NetCore
                 Console.WriteLine(e);
             }
         }
+
+        public async Task AddUser(IGuildUser user)
+        {
+            try
+            {
+                await FixConnection();
+                var command =
+                    new SqlCommand(
+                        "INSERT INTO DiscordUser(DiscordId, GachiPoints, RankLevel, PermissionLevel, DiscordGuild) VALUES (@id, @points, @rank, @permission, @guild)");
+                command.Parameters.Add(new SqlParameter("id", user.Id));
+                command.Parameters.Add(new SqlParameter("points", 0));
+                command.Parameters.Add(new SqlParameter("rank", 0));
+                command.Parameters.Add(new SqlParameter("permission", 0));
+                command.Parameters.Add(new SqlParameter("guild", user.GuildId));
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error adding user");
+                Console.WriteLine(e.StackTrace);
+            }
+        }
         /// <summary>
         /// Fix the shitty db connection if it breaks
         /// </summary>
