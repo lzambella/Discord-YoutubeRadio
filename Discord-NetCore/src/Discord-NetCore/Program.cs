@@ -74,7 +74,7 @@ namespace Discord_NetCore
             Console.WriteLine($"Token: {argv["DiscordToken"].Substring(5)}");
             Console.WriteLine($"Data: {argv["DataLocation"]}");
             Console.WriteLine("Logging into server");
-            var config = new DiscordSocketConfig {AudioMode = AudioMode.Outgoing};
+            var config = new DiscordSocketConfig {AudioMode = AudioMode.Both};
 
             Client = new DiscordSocketClient(config);
             commands = new CommandService();

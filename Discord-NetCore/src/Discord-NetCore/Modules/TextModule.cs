@@ -39,23 +39,45 @@ namespace Discord_NetCore.Modules
             }
         }
         [Command("purge"), Summary("Delete a number of messages")]
-        public async Task Purge(IUserMessage msg, [Summary("Number of messages")]string s = null)
+        public async Task Purge([Summary("Number of messages")]string s = null)
         {
             try
             {
-                var user = msg.Author as IGuildUser;
+                var user = Context.Message.Author as IGuildUser;
                 if (user.Id == Program.OwnerId)
                 {
                     if (s == null)
                         return;
                     var num = Int32.Parse(s);
-                    var messages = await msg.Channel.GetMessagesAsync(num).Flatten();
-                    await msg.Channel.DeleteMessagesAsync(messages);
+                    var messages = await Context.Channel.GetMessagesAsync(num).Flatten();
+                    await Context.Channel.DeleteMessagesAsync(messages);
                 }
             }
             catch (Exception)
             {
 
+            }
+        }
+        [Command("findanime"), Summary("Search for anime on MyAnimeList")]
+        public async Task FindAnime([Summary("Keywords or id")]string keywords = null)
+        {
+            if (keywords == null) return;
+            try
+            { 
+                var animeSearcher = new MAL.AnimeSearch("epicfailol", "ccvtxNi7vcvD");
+                var anime = await animeSearcher.FindAnime(keywords);
+
+                var s = "";
+                for (var i = 0; i < 5 || i < anime.Entries.Count(); i++)
+                {
+                    var entry = anime.Entries[i];
+                    s += $"```{entry.Title}\n{entry.EnglishTitle}:{entry.EpisodeCount} episodes```\n\n ```{entry.Synopsis}```\n";
+                    await ReplyAsync($"{entry.ImageUrl}\n{s}");
+                    await ReplyAsync("----------------------------------------------------");
+                }
+            } catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
 

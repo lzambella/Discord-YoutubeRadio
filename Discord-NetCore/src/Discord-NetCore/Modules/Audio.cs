@@ -5,71 +5,77 @@ using Discord.Audio;
 using Discord.Commands;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
-
+using Discord.WebSocket;
 namespace Discord_NetCore.Modules 
 {
     [Name("Audio")]
     public class Audio : ModuleBase
     {
-        public Audio()
-        {
-            Console.WriteLine("Initialized Audio Module");
-        }
-        private IAudioClient _vClient = Program.Audio;
+        private IAudioClient client { get; set; }
         // Create a Join command, that will join the parameter or the user's current voice channel
         [Command("joinchannel")]
-        public async Task JoinChannel(IVoiceChannel channel = null)
+        public async Task JoinChannel()
         {
             try
             {
-
-                await ReplyAsync("Joining voice channel...");
                 // Get the audio channel
-                channel = channel ?? (Context.User as IGuildUser)?.VoiceChannel;
-                if (channel == null) { await ReplyAsync("User must be in a voice channel, or a voice channel must be passed as an argument."); return; }
-                // Get the IAudioClient by calling the JoinAsync method
-                Program.Audio = await channel.ConnectAsync();
+                var user = (IGuildUser) Context.User;
+                var channel = user.VoiceChannel;
+                if (channel == null) { await ReplyAsync("User must be in a voice channel"); return; }
+                client = await channel.ConnectAsync().ConfigureAwait(false);
+                await ReplyAsync($"Joining {Context.User.Mention} voice channel {channel.Name}");
             }
             catch (Exception e)
             {
-
-                Console.WriteLine(e);
+                Console.WriteLine(e.StackTrace);
             }
         }
 
         [Command("meme")]
-        public async Task AudioTest(IUserMessage msg)
+        public async Task AudioTest()
         {
             try
             {
-                await PlaySong($"{Program.argv["DataLocation"]}\\sound\\Motivation\\smart.mp3", 1.0f);
+                var channel = (Context.User as IGuildUser).VoiceChannel;
+                await PlaySong($"{Program.argv["DataLocation"]}\\sound\\gachi\\beep1.mp3", 0.5f, channel);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
         }
-        private async Task PlaySong(string song, float volume)
+        private async Task PlaySong(string song, float volume, IVoiceChannel chan)
         {
+            var audioClient = await chan.ConnectAsync();
             const int blockSize = 3840;
             var buffer = new byte[blockSize];
-            var process = Process.Start(new ProcessStartInfo
+            using (var channel = await chan.ConnectAsync())
+            using (var stream = channel.CreatePCMStream(2880, bitrate: chan.Bitrate))
             {
-                FileName = "ffmpeg",
-                Arguments =
+                var process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "ffmpeg",
+                    Arguments =
                     $"-i \"{song}\" " +
-                    "-f s16le -ar 48000 -ac 2 pipe:1 -loglevel quiet",
-                UseShellExecute = false,
-                RedirectStandardOutput = true
-            });
+                    "-f s16le -ar 48000 -ac 2 pipe:1",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = false
+                });
+                await process.StandardOutput.BaseStream.CopyToAsync(stream);
+                process.WaitForExit();
+            }
+            /*
+            var voiceStream = audioClient.CreatePCMStream(blockSize);
             while (true)
             {
                 var byteCount = await process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
                 if (byteCount == 0)
                     break;
                 buffer = AdjustVolume(buffer, volume);
-                
+                await voiceStream.WriteAsync(buffer, 0, blockSize);
             }
+            */
 
         }
 
