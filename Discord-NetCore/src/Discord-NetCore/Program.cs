@@ -35,6 +35,13 @@ namespace Discord_NetCore
         /// Dictionary of all the arguments
         /// </summary>
         public static Dictionary<string, string> argv = new Dictionary<string, string>();
+        public static Modules.Audio.MusicPlayer Player { get; set; }
+
+        /// <summary>
+        /// Contains the music player for a specific server
+        /// </summary>
+        public static Dictionary<ulong, Modules.Audio.MusicPlayer> MusicPlayers {get; set; }
+
         private DependencyMap map;
         /// <summary>
         /// Run the main program asynchronously
@@ -75,9 +82,10 @@ namespace Discord_NetCore
             Console.WriteLine($"Data: {argv["DataLocation"]}");
             Console.WriteLine("Logging into server");
             var config = new DiscordSocketConfig {AudioMode = AudioMode.Both};
-
+            Player = new Modules.Audio.MusicPlayer();
             Client = new DiscordSocketClient(config);
             commands = new CommandService();
+            MusicPlayers = new Dictionary<ulong, Modules.Audio.MusicPlayer>();
             await Client.LoginAsync(TokenType.Bot, argv["DiscordToken"]);
 
             Console.WriteLine("Successfully Logged in.");
