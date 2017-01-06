@@ -36,7 +36,7 @@ namespace Discord_NetCore
         /// </summary>
         public static Dictionary<string, string> argv = new Dictionary<string, string>();
         public static Modules.Audio.MusicPlayer Player { get; set; }
-
+        public static IList<TempVoice> TempVoiceChannels { get; set; } = new List<TempVoice>();
         /// <summary>
         /// Contains the music player for a specific server
         /// </summary>
@@ -93,6 +93,17 @@ namespace Discord_NetCore
             Database = new DbHandler(argv["ConnectionString"]);
             await Client.ConnectAsync();
             await InstallCommands();
+            Client.UserPresenceUpdated += async (guild, user, currentPresence, updatedPresence) =>
+            {
+                if (user.Id == 262069349815156746 && updatedPresence.Status == UserStatus.Online)
+                {
+                    await (user as IGuildUser)?.Guild.GetTextChannelAsync(215339016755740673).Result.SendMessageAsync("@everyone Holy fuck anthony has logged in!@!!!@!@!");
+                }
+                else if (user.Id == 215537300971454464 &&  updatedPresence.Status == UserStatus.Online)
+                {
+                    await (user as IGuildUser)?.Guild.GetTextChannelAsync(215339016755740673).Result.SendMessageAsync("@everyone dude.... mike has logged in");
+                }
+            };
             Client.MessageReceived += async (e) =>
             {
                 try
