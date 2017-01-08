@@ -13,11 +13,16 @@ namespace Discord_NetCore.Modules
         [Command("memory"), Summary("View avaliable memory")]
         public async Task GetInfo()
         {
-            var process = new Process();
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.FileName = "/usr/bin/free";
-            process.StartInfo.Arguments = "-h";
+            var process = new Process
+            {
+                StartInfo =
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    FileName = "/usr/bin/free",
+                    Arguments = "-h"
+                }
+            };
             process.Start();
             var stdout = await process.StandardOutput.ReadToEndAsync();
             string output = $"```{stdout}```";
