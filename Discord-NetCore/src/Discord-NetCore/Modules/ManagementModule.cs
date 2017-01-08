@@ -20,6 +20,7 @@ namespace Discord_NetCore.Modules
             await voiceChannel.RestrictVoiceChannel();
             await ReplyAsync("Created new channel");
         }
+        /*
         [Command("mute"), Summary("Server mute an annoying retard")]
         public async Task Mute([Summary("Mention")]IUser user)
         {
@@ -47,6 +48,7 @@ namespace Discord_NetCore.Modules
             };
             await voiceUser.ModifyAsync(propAction);
         }
+        */
 
     }
 }

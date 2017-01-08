@@ -8,7 +8,6 @@ using Discord;
 using Discord.Commands;
 using FacebookSharp;
 using FacebookSharp.GraphAPI.Fields;
-using NetCoreBot.Modules.facebook;
 using Newtonsoft.Json;
 
 namespace Discord_NetCore.Modules
@@ -20,11 +19,6 @@ namespace Discord_NetCore.Modules
         /// Facebook API Token remove this
         /// </summary>
         readonly string _token = Program.argv["FacebookToken"];
-
-        /// <summary>
-        /// Stores 3000 of the latest memes so we dont have to keep requesting it from facebook
-        /// </summary>
-        private photojson Data { get; set; }
 
         [Command("thereal"), Summary("Post a random The Real image")]
         public async Task Real()
@@ -45,7 +39,7 @@ namespace Discord_NetCore.Modules
             var files = Directory.GetFiles(directory);
             return files[rand.Next(files.Length)];
         }
-
+        /*
         [Command("randomeme"), Summary("Get a random randomly generated meme")]
         public async Task Memes()
         {
@@ -92,6 +86,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e);
             }
         }
+        */
         [Command("checkmeme"), Summary("Time until a new meme is avaliable")]
         public async Task CheckMeme()
         {

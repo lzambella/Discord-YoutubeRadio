@@ -135,7 +135,7 @@ namespace Discord_NetCore
                     Console.WriteLine(ex);
                 }
             };
-            Timer = new Timer(ImagePoster, null, 6000, 6000);
+            //Timer = new Timer(ImagePoster, null, 6000, 6000);
             await Task.Delay(-1);
         }
 
@@ -166,7 +166,7 @@ namespace Discord_NetCore
                 await message.Channel.SendMessageAsync(result.ErrorReason);
             */
         }
-
+        /*
         /// <summary>
         /// Posts a random meme to the chat if there is a new meme
         /// </summary>
@@ -205,6 +205,7 @@ namespace Discord_NetCore
                 Console.WriteLine(e);
             }
         }
+        */
     }
 }
 

@@ -22,7 +22,7 @@ namespace Discord_NetCore.Modules
 
                 var userDM = await guild.GetUser(id).CreateDMChannelAsync();
                 for (var x = 0; x < 5; x++)
-                    await userDm.SendMessageAsync("You are being annoying!!!! Get On!!!!", true);
+                    await userDM.SendMessageAsync("You are being annoying!!!! Get On!!!!", true);
             }
         }
         [Command("8ball"), Summary("Ask me for advice.")]
@@ -84,6 +84,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e.StackTrace);
             }
         }
+        /*
         [Command("findanime"), Summary("Search for anime on MyAnimeList")]
         public async Task FindAnime([Summary("Keywords or id")]string keywords = null)
         {
@@ -105,7 +106,7 @@ namespace Discord_NetCore.Modules
             {
                 Console.WriteLine(e);
             }
-        }
+        */
 
     }
 }
