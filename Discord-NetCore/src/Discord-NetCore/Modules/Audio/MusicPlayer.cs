@@ -3,6 +3,7 @@ using Discord.Audio;
 using Discord.Commands;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -52,9 +53,28 @@ namespace Discord_NetCore.Modules.Audio
         /// <summary>
         /// True if a stream is not playing (IE the stream is free)
         /// </summary>
-        private bool AudioFree { get; set; } = true;
+        public bool AudioFree { get; private set; }
+        /// <summary>
+        /// Whether the stream will play automatically when the first song is queued
+        /// </summary>
         public bool AutoPlay { get; set; } = true;
+        /// <summary>
+        /// Whether the current song will skip
+        /// </summary>
         public bool SlatedForSkip { get; private set; } = false;
+        /// <summary>
+        /// Allows sending messages to the channel
+        /// </summary>
+        private CommandContext _context { get; set; }
+        /// <summary>
+        /// Stream process
+        /// </summary>
+        private Process process { get; set; }
+        public MusicPlayer(CommandContext context)
+        {
+            _context = context;
+            AudioFree = true;
+        }
         /// <summary>
         /// Attempts to move the bot to an audio channel
         /// </summary>
@@ -73,7 +93,7 @@ namespace Discord_NetCore.Modules.Audio
                 await AudioClient.DisconnectAsync();
                 AudioClient = await chan.ConnectAsync();
                 ConnectedChannel = chan;
-            }   
+            }
         }
 
         /// <summary>
@@ -103,7 +123,23 @@ namespace Discord_NetCore.Modules.Audio
                 process.WaitForExit();
             }
         }
-        
+        public void TruffleShuffle()
+        {
+            var songList = new List<Song>();
+            songList = _songQueue.ToList();
+            // delete the list somehow
+            _songQueue = new ConcurrentQueue<Song>();
+            for (var i = 0; i < songList.Count; i++)
+            {
+                Song temp;
+                var rand = DateTime.Now.ToFileTimeUtc() % songList.Count;
+                temp = songList[i];
+                songList[i] = songList[(int)rand];
+                songList[(int)rand] = temp;
+            }
+            foreach (var s in songList)
+                _songQueue.Enqueue(s);
+        }
         /// <summary>
         /// Adjusts PCM audio volume
         /// </summary>
@@ -150,7 +186,7 @@ namespace Discord_NetCore.Modules.Audio
             {
                 AudioCancelSource.Cancel();
                 AudioCancelSource.Dispose();
-               
+
                 if (!AudioFree)
                     AudioFree = true;
             } catch (Exception)
@@ -158,41 +194,57 @@ namespace Discord_NetCore.Modules.Audio
                 throw;
             }
         }
-        /*
         public async Task RepeatAudio()
         {
-            RecordingCancelSource = new CancellationTokenSource();
-            RecordingCancelToken = RecordingCancelSource.Token;
+            var RecordingCancelSource = new CancellationTokenSource();
+            var RecordingCancelToken = RecordingCancelSource.Token;
             await Task.Factory.StartNew(async () =>
             {
-                using (var stream = I)
-            }, RecordingCancelToken);
+                using (var stream = AudioClient.CreatePCMStream(2880, bitrate: ConnectedChannel.Bitrate))
+                {
+                    while (true)
+                    {
+                        var buffer = new byte[1024];
+                        await stream.ReadAsync(buffer, 0, 1024);
+                        await stream.WriteAsync(buffer, 0, 1024);
+                        
+                    }
+                }
+            });
         }
-        */
         /// <summary>
         /// Runs the music queue
         /// </summary>
         /// <param name="context">CommandContext for sending a message when a new song is playing</param>
         /// <returns></returns>
-        public async Task RunQueue(CommandContext context)
+        public async Task RunQueue()
         {
             if (!AudioFree)
                 throw new AudioStreamInUseException("Something is currently playing!");
             AudioCancelSource = new CancellationTokenSource();
             CancelToken = AudioCancelSource.Token;
 
-            await Task.Factory.StartNew(async () =>
+            StreamThread = new Thread(async () =>
             {
                 AudioFree = false;
                 while (_songQueue.Any())
                 {
+
                     Song song;
                     _songQueue.TryDequeue(out song);
-                    await context.Channel.SendMessageAsync($"Now playing: `{song.Title}`");
-                    StreamYoutube(song.Url);
+                    await _context.Channel.SendMessageAsync($"Now playing: `{song.Title}`");
+                    await StreamYoutube(song.Url, CancelToken);
+                    // /\ /\ WARNING /\ /\ hack detected ahead!!
+                    while (process == null) // Wait for process to start
+                        Thread.Sleep(100);
+                    while (process != null || !process.HasExited) // wait for process to stop
+                        Thread.Sleep(100);
                 }
+                StreamThread.Join(); // Does this even do anything
                 AudioFree = true;
+                Console.WriteLine($"{DateTime.Now}: Process finished.");
             });
+            StreamThread.Start();
         }
         /// <summary>
         /// Gets the current queue in string format
@@ -208,6 +260,11 @@ namespace Discord_NetCore.Modules.Audio
                 i++;
             }
             return str;
+
+        }
+        public void SkipSong()
+        {
+            SlatedForSkip = true;
 
         }
         /// <summary>
@@ -234,62 +291,57 @@ namespace Discord_NetCore.Modules.Audio
         /// </summary>
         /// <param name="url">Url of the video</param>
         /// <returns></returns>
-        private void StreamYoutube(string url)
+        private async Task StreamYoutube(string url, CancellationToken cancelToken)
         {
-
-            StreamThread = new Thread(async () =>
+            using (var stream = AudioClient.CreatePCMStream(2880, bitrate: ConnectedChannel.Bitrate))
             {
-                using (var stream = AudioClient.CreatePCMStream(2880, bitrate: ConnectedChannel.Bitrate))
+                process = Process.Start(new ProcessStartInfo
                 {
-                    var process = Process.Start(new ProcessStartInfo
+                    // add way to execute bash if on linux
+                    FileName = "cmd",
+                    Arguments = $"/C youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = false,
+
+                });
+
+                process.Exited += (o, e) =>
+                {
+                    process.Dispose();
+                };
+
+                try
+                {
+                    int blockSize = 1024;
+                    var buffer = new byte[blockSize];
+                    int byteCount = 1;
+                    do
                     {
-                        // add way to execute bash if on linux
-                        FileName = "cmd",
-                        Arguments = $"/C youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = false,
+                        // Don't send any data or read from the stream if the stream is supposed to be paused
+                        if (Paused)
+                            continue;
+                        byteCount = await process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
+                        if (byteCount == 0 || SlatedForSkip)
+                            break;
 
-                    });
-
-                    /*
-                    await process.StandardOutput.BaseStream.CopyToAsync(stream, 81920, CancelToken);
+                    if (cancelToken.IsCancellationRequested)
+                        break;
+                        
+                        buffer = AdjustVolume(buffer, Volume);
+                        await stream.WriteAsync(buffer, 0, blockSize);
+                    } while (byteCount > 0);
                     await stream.FlushAsync();
-                    */
-
-                    //Audio stutters for a few seconds
-                    try
-                    {
-                        int blockSize = 1024;
-                        var buffer = new byte[blockSize];
-                        int byteCount = 1;
-                        do
-                        {
-                            // Don't send any data or read from the stream if the stream is supposed to be paused
-                            if (Paused)
-                                continue;
-                            byteCount = await process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
-                            if (byteCount == 0 || SlatedForSkip)
-                                break;
-                            buffer = AdjustVolume(buffer, Volume);
-                            await stream.WriteAsync(buffer, 0, blockSize, CancelToken);
-                        } while (byteCount > 0);
-                        await stream.FlushAsync();
-                        process.WaitForExit();
-                        process.Dispose();
-                        SlatedForSkip = true;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        Console.WriteLine("Stream writing cancelled.");
-                    }
+                    process.WaitForExit();
+                    
                     SlatedForSkip = true;
                 }
-            });
-            StreamThread.Start();
-            StreamThread.Join();
-
-
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine("Stream writing cancelled.");
+                }
+                SlatedForSkip = true;
             }
         }
+    }
 }
