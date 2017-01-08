@@ -23,7 +23,7 @@ namespace Discord_NetCore.Modules
         private Process Process { get; set; }
 
         // Create a Join command, that will join the parameter or the user's current voice channel
-        [Command("joinchannel", RunMode = RunMode.Async)]
+        [Command("joinchannel", RunMode = RunMode.Async), Alias("join", "j", "voice"), Summary("Joins the voice channel the user is in")]
         public async Task JoinChannel()
         {
             try
@@ -34,7 +34,7 @@ namespace Discord_NetCore.Modules
 
                 if (!Program.MusicPlayers.ContainsKey(guildId))
                 {
-                    Program.MusicPlayers.Add(guildId, new MusicPlayer());
+                    Program.MusicPlayers.Add(guildId, new MusicPlayer(Context));
                     await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
                     await ReplyAsync($"Joining {Context.User.Mention}'s voice channel: {channel.Name}");
                 }
@@ -49,8 +49,14 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e);
             }
         }
-
-        [Command("youtube", RunMode = RunMode.Async)]
+        [Command("skip"), Summary("Skip the currently running song")]
+        public async Task SkipSongAsync()
+        {
+            var audioPlayer = GetMusicPlayerForGuild();
+            audioPlayer.SkipSong();
+            await ReplyAsync("Skipping song!");
+        }
+        [Command("youtube", RunMode = RunMode.Async), Summary("Stream a youtube video")]
         public async Task Youtube(string url)
         {
             try
@@ -66,8 +72,10 @@ namespace Discord_NetCore.Modules
                     await audioPlayer.AddToQueue(url);
                     await ReplyAsync("Added the song to the queue.");
                 }
-                if (audioPlayer.AutoPlay)
+                if (audioPlayer.AutoPlay && audioPlayer.AudioFree)
+                {
                     await RunQueue();
+                }
             }
             catch (AudioStreamInUseException a)
             {
@@ -75,13 +83,26 @@ namespace Discord_NetCore.Modules
                 await ReplyAsync(a.Message);
             }
         }
-        [Command("play", RunMode = RunMode.Async), Summary("Plays the queue")]
-        public async Task RunQueue()
+        [Command("shuffle"), Summary("Shuffle the current queue")]
+        public async Task Shuffle()
         {
             var audioPlayer = GetMusicPlayerForGuild();
-            await audioPlayer.RunQueue(Context);
+            audioPlayer.TruffleShuffle();
+            await ReplyAsync("Shuffled the queue!");
         }
-        [Command("togglepause", RunMode = RunMode.Async), Summary("Pause/play the audio stream"), Alias("p")]
+        [Command("play", RunMode = RunMode.Async), Summary("Plays the queue"), Alias("run", "start")]
+        public async Task RunQueue()
+        {
+            try
+            {
+                var audioPlayer = GetMusicPlayerForGuild();
+                await audioPlayer.RunQueue();
+            } catch (AudioStreamInUseException)
+            {
+                await ReplyAsync("Something is already playing!");
+            }
+        }
+        [Command("togglepause", RunMode = RunMode.Async), Summary("Pause/play the audio stream"), Alias("p", "pause")]
         public async Task PauseStream()
         {
             try
@@ -95,13 +116,14 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e);
             }
         }
-        [Command("checkqueue", RunMode = RunMode.Async)]
+        [Command("queue", RunMode = RunMode.Async), Summary("Prints the current queue"), Alias("q","check")]
         public async Task CheckQueue()
         {
             var audioPlayer = GetMusicPlayerForGuild();
             await ReplyAsync($"```{audioPlayer.GetQueue()}```");
         }
-        [Command("autoplay"), Summary("Toggle autoplay")]
+
+        [Command("autoplay"), Summary("Toggle autoplay"), Alias("a")]
         public async Task AutoPlay()
         {
             var audioPlayer = GetMusicPlayerForGuild();
@@ -111,7 +133,7 @@ namespace Discord_NetCore.Modules
             else await ReplyAsync("Autoplay enabled!");
 
         }
-        [Command("stop", RunMode = RunMode.Async)]
+        [Command("stop", RunMode = RunMode.Async), Summary("Stops the audio player and destroys the queue")]
         public async Task StopAudio()
         {
             try
@@ -126,7 +148,7 @@ namespace Discord_NetCore.Modules
             }
         }
 
-        [Command("volume", RunMode = RunMode.Async)]
+        [Command("volume", RunMode = RunMode.Async), Summary("Change the colume"), Alias("v", "vol")]
         public async Task ChangeVolume([Summary("Volume 0-100")] int vol)
         {
             if (vol > 100) vol = 100;
