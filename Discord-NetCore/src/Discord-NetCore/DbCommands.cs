@@ -24,7 +24,7 @@ namespace Discord_NetCore
             {
                 Connection = new SqlConnection(connectionString);
                 Connection.Open();
-                Console.WriteLine("Connected to database.");
+                Console.WriteLine($"{DateTime.Now}: Connected to database.");
                 // Start the Point Incrementation Timer
                 timer = new Timer(PointIncrementer, null, 0, 60000);
             }
