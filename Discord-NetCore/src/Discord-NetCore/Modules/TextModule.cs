@@ -59,7 +59,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e.StackTrace);
             }
         }
-
+        /*
         [Command("spy"), Summary("Spy on someone's facebook page")]
         public async Task Spy([Summary("User id")] string id = null)
         {
@@ -84,6 +84,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e.StackTrace);
             }
         }
+        */
         /*
         [Command("findanime"), Summary("Search for anime on MyAnimeList")]
         public async Task FindAnime([Summary("Keywords or id")]string keywords = null)
