@@ -77,22 +77,21 @@ namespace Discord_NetCore
                         break;
                 }
             }
-            Console.WriteLine($"Connection String: {argv["ConnectionString"].Substring(16)}");
-            Console.WriteLine($"Token: {argv["DiscordToken"].Substring(5)}");
-            Console.WriteLine($"Data: {argv["DataLocation"]}");
             Console.WriteLine("Logging into server");
             var config = new DiscordSocketConfig {AudioMode = AudioMode.Both};
-            Player = new Modules.Audio.MusicPlayer();
             Client = new DiscordSocketClient(config);
             commands = new CommandService();
             MusicPlayers = new Dictionary<ulong, Modules.Audio.MusicPlayer>();
             await Client.LoginAsync(TokenType.Bot, argv["DiscordToken"]);
 
-            Console.WriteLine("Successfully Logged in.");
-
             Database = new DbHandler(argv["ConnectionString"]);
+
             await Client.ConnectAsync();
+            if (Client.ConnectionState == ConnectionState.Connected)
+                Console.WriteLine($"{DateTime.Now}: Successfully Logged in.");
+            else Console.WriteLine($"{DateTime.Now}: Error Something Happened.");
             await InstallCommands();
+            /*
             Client.UserPresenceUpdated += async (guild, user, currentPresence, updatedPresence) =>
             {
                 if (user.Id == 262069349815156746 && updatedPresence.Status == UserStatus.Online)
@@ -104,6 +103,7 @@ namespace Discord_NetCore
                     await (user as IGuildUser)?.Guild.GetTextChannelAsync(215339016755740673).Result.SendMessageAsync("@everyone dude.... mike has logged in");
                 }
             };
+            */
             Client.MessageReceived += async (e) =>
             {
                 try
@@ -146,6 +146,7 @@ namespace Discord_NetCore
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed succesfully)
             var result = await commands.ExecuteAsync(context, argPos, map);
+            Console.WriteLine($"{DateTime.Now}: Command request from {messageParam.Author.Username}. Command: {messageParam.Content}.");
             /*
             if (!result.IsSuccess)
                 await message.Channel.SendMessageAsync(result.ErrorReason);
