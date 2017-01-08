@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -19,7 +19,8 @@ namespace Discord_NetCore.Modules
             {
                 var id = ulong.Parse(Program.Database.ParseString(nickMention));
                 var guild = Program.Client.GetGuild(Context.Channel.Id);
-                var userDm = await guild.GetUser(id).CreateDMChannelAsync();
+
+                var userDM = await guild.GetUser(id).CreateDMChannelAsync();
                 for (var x = 0; x < 5; x++)
                     await userDm.SendMessageAsync("You are being annoying!!!! Get On!!!!", true);
             }
@@ -31,6 +32,7 @@ namespace Discord_NetCore.Modules
                 await ReplyAsync("I didn't get a question.");
             else
             {
+
                 var arr = new[] { "Yes", "No", "Maybe", "Ask again", "I'm not answering that", "That question sucks" };
                 var time = DateTime.Now.ToFileTime();
                 var rand = (time/100)%arr.Length;
@@ -42,12 +44,12 @@ namespace Discord_NetCore.Modules
         {
             try
             {
-                var user = Context.User as IGuildUser;
-                if (user != null && user.Id == Program.OwnerId)
+                var user = Context.Message.Author as IGuildUser;
+                if (user.Id == Program.OwnerId)
                 {
                     if (s == null)
                         return;
-                    var num = int.Parse(s);
+                    var num = Int32.Parse(s);
                     var messages = await Context.Channel.GetMessagesAsync(num).Flatten();
                     await Context.Channel.DeleteMessagesAsync(messages);
                 }
@@ -80,6 +82,28 @@ namespace Discord_NetCore.Modules
             catch (Exception e)
             {
                 Console.WriteLine(e.StackTrace);
+            }
+        }
+        [Command("findanime"), Summary("Search for anime on MyAnimeList")]
+        public async Task FindAnime([Summary("Keywords or id")]string keywords = null)
+        {
+            if (keywords == null) return;
+            try
+            { 
+                var animeSearcher = new MAL.AnimeSearch("epicfailol", "ccvtxNi7vcvD");
+                var anime = await animeSearcher.FindAnime(keywords);
+
+                var s = "";
+                for (var i = 0; i < 5 || i < anime.Entries.Count(); i++)
+                {
+                    var entry = anime.Entries[i];
+                    s += $"```{entry.Title}\n{entry.EnglishTitle}:{entry.EpisodeCount} episodes```\n\n ```{entry.Synopsis}```\n";
+                    await ReplyAsync($"{entry.ImageUrl}\n{s}");
+                    await ReplyAsync("----------------------------------------------------");
+                }
+            } catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
 

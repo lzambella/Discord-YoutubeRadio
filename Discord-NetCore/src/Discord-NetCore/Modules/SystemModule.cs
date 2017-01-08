@@ -83,21 +83,28 @@ namespace Discord_NetCore.Modules
                 var commandName = command.Name;
                 var commandSummary = command.Summary;
                 var commandParameters = command.Parameters;
-                var paramString = commandParameters.Aggregate("", (current, parameter) => current + $"<{parameter.Summary}> ");
-                await ReplyAsync($"Name: `{commandName}`\nDescription: `{commandSummary}`\n" +
-                                                   $"Usage: `!{commandName} {paramString}`");
+                var commandAlias = string.Join(",", command.Aliases);
+                var paramString = "";
+                foreach (var parameter in commandParameters)
+                    paramString += $"<{parameter.Summary}> ";
+                await ReplyAsync($"Name: `{commandName}`\n" +
+                                 $"Description: `{commandSummary}`\n" +
+                                 $"Usage: `!{commandName} {paramString}`\n" +
+                                 $"Aliases: `{commandAlias}`");
             }
             else
             {
                 foreach (var module in modules)
                 {
                     str += $"{module.Name}: ";
-                    str = module.Commands.Aggregate(str, (current, command) => current + $"`{command.Name}` ");
+                    foreach (var command in module.Commands)
+                        str += $"{command.Name} ";
                     str += '\n';
                 }
-                await ReplyAsync("These are the commands you can use:\n" +
-                                                  $"{str}\n" +
-                                                   "Type `!help <command>` for more info.");
+                await ReplyAsync("```\n" +
+                                 "Commands\n" +
+                                 $"{str}\n" +
+                                 "Type !help <command> for more info.```");
 
             }
         }
