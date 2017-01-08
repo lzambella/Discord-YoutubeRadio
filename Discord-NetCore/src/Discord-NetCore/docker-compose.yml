@@ -1,0 +1,8 @@
+version: '2'
+
+services:
+  discord-netcore:
+    image: discord-netcore
+    build:
+      context: .
+      dockerfile: Dockerfile
