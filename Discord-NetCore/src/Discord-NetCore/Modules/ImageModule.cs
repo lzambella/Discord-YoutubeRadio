@@ -6,8 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using FacebookSharp;
-using FacebookSharp.GraphAPI.Fields;
 using Newtonsoft.Json;
 
 namespace Discord_NetCore.Modules

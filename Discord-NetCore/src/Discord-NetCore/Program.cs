@@ -8,8 +8,6 @@ using Discord;
 using Discord.Audio;
 using Discord.Commands;
 using Discord.WebSocket;
-using FacebookSharp;
-using FacebookSharp.GraphAPI.Fields;
 
 namespace Discord_NetCore
 {
