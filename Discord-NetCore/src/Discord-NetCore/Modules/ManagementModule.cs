@@ -11,7 +11,7 @@ namespace Discord_NetCore.Modules
     public class ManagementModule : ModuleBase
     {
         [Command("createteamchannel"), Summary("Creates a temporary voice channel that only a certain roll can enter")]
-        public async Task CreateTeamChannel([Summary("Name of the channel")]string name, [Summary("Duration in minutes the channel is active for")]int duration)
+        public async Task CreateTeamChannel([Summary("Name")]string name, [Summary("Duration in minutes")]int duration)
         {
             var voiceChannel = new TempVoice(name, duration, Context.Guild.Id, Context);
             Program.TempVoiceChannels.Add(voiceChannel);

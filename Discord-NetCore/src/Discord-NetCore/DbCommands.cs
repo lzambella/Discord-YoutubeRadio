@@ -26,7 +26,7 @@ namespace Discord_NetCore
                 Connection.Open();
                 Console.WriteLine($"{DateTime.Now}: Connected to database.");
                 // Start the Point Incrementation Timer
-                timer = new Timer(PointIncrementer, null, 0, 60000);
+                timer = new Timer(PointIncrementer, null, 6000, 600000);
             }
             catch (Exception e)
             {

@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace Discord_NetCore.Modules
 {
-    [Name("Images")]
+    //[Name("Images")]
     public class ImageModule : ModuleBase
     {
         /// <summary>
@@ -18,7 +18,7 @@ namespace Discord_NetCore.Modules
         /// </summary>
         readonly string _token = Program.argv["FacebookToken"];
 
-        [Command("thereal"), Summary("Post a random The Real image")]
+        //[Command("thereal"), Summary("Post a random The Real image")]
         public async Task Real()
         {
             try

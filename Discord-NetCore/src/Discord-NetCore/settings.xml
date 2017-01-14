@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<discordSettings>
+    <discordToken>MjE1NzEwODYyMDQ2OTIwNzA0.CtiwKw.styiNS47R_R0n51sGWWLPi8ofuI</discordToken>
+    <facebookToken>319767325068615|fx5bMgebMph3yggufnsAHsscqX8</facebookToken>
+    <databaseString>Server=tcp:gachibot.database.windows.net,1433;Initial Catalog=GachiBot;Persist Security Info=False;User ID=arch;Password=ZsXdCfV12345;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;</databaseString>
+</discordSettings>
