@@ -238,34 +238,31 @@ namespace Discord_NetCore.Modules.Audio
         {
             if (!AudioFree)
                 throw new AudioStreamInUseException("Something is currently playing!");
-            AudioCancelSource = new CancellationTokenSource();
-            CancelToken = AudioCancelSource.Token;
 
-            StreamThread = new Thread(new ThreadStart(async () => await RunQueueThread()));
+            StreamThread = new Thread(new ThreadStart(async () =>
+                await RunQueueThread()));
             StreamThread.Start();
-            StreamThread.Join();
         }
         private async Task RunQueueThread()
         {
             AudioFree = false;
             while (_songQueue.Any())
             {
-
+                AudioCancelSource = new CancellationTokenSource();
+                CancelToken = AudioCancelSource.Token;
                 Song song;
                 _songQueue.TryDequeue(out song);
                 await _context.Channel.SendMessageAsync($"Now playing: `{song.Title}`");
                 await StreamYoutube(song.Url, CancelToken);
                 Console.WriteLine("Running audio...");
                 // /\ /\ WARNING /\ /\ hack detected ahead!!
-                while (_process == null) // Wait for process to start
-                    Thread.Sleep(100);
                 while (!_process.HasExited) // wait for process to stop
-                    Thread.Sleep(10);
-                _process.Dispose();
+                    Thread.Sleep(100);
             }
             AudioFree = true;
+            _process.Dispose();
             Console.WriteLine($"{DateTime.Now}: Process finished.");
-            return;
+            
         }
         /// <summary>
         /// Gets the current queue in string format
@@ -332,7 +329,6 @@ namespace Discord_NetCore.Modules.Audio
                 {
                     int blockSize = 1024;
                     var buffer = new byte[blockSize];
-                    var youtubeBuffer = new byte[blockSize];
                     int byteCount = 1; 
                     do
                     {
@@ -353,7 +349,6 @@ namespace Discord_NetCore.Modules.Audio
                 }
                 catch (OperationCanceledException)
                 {
-                    _process.Dispose();
                     Console.WriteLine("Stream writing cancelled.");
                     WillSkip = false;
                 }

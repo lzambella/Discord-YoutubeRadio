@@ -43,7 +43,7 @@ namespace Discord_NetCore
         /// <summary>
         /// Contains the music player for a specific server
         /// </summary>
-        public static Dictionary<ulong, Modules.Audio.MusicPlayer> MusicPlayers {get; set; }
+        public static Dictionary<ulong, Modules.Audio.MusicPlayer> MusicPlayers { get; set; } = new Dictionary<ulong, Modules.Audio.MusicPlayer>();
 
         private DependencyMap map;
         private string LatestMeme { get; set; }
@@ -73,7 +73,6 @@ namespace Discord_NetCore
             var config = new DiscordSocketConfig {AudioMode = AudioMode.Both};
             Client = new DiscordSocketClient(config);
             commands = new CommandService();
-            MusicPlayers = new Dictionary<ulong, Modules.Audio.MusicPlayer>();
 
             await Client.LoginAsync(TokenType.Bot, _botSettings.DiscordToken);
 
