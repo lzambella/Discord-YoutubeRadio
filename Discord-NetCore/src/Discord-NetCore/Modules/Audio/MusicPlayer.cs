@@ -108,8 +108,6 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         public async Task PlaySong(string song)
         {
-            if (!AudioFree)
-                throw new AudioStreamInUseException("Something is already being played");
             using (var stream = AudioClient.CreatePCMStream(2880, bitrate: ConnectedChannel.Bitrate))
             {
                 var process = Process.Start(new ProcessStartInfo
@@ -122,11 +120,9 @@ namespace Discord_NetCore.Modules.Audio
                     RedirectStandardOutput = true,
                     RedirectStandardError = false
                 });
-                AudioFree = false;
                 await process.StandardOutput.BaseStream.CopyToAsync(stream);
                 await stream.FlushAsync();
                 process.WaitForExit();
-                AudioFree = true;
             }
         }
         /// <summary>
@@ -253,7 +249,10 @@ namespace Discord_NetCore.Modules.Audio
                 Song song;
                 _songQueue.TryDequeue(out song);
                 await _context.Channel.SendMessageAsync($"Now playing: `{song.Title}`");
-                await StreamYoutube(song.Url, CancelToken);
+                if (song.IsFile)
+                    await PlaySong(song.Url);
+                else
+                    await StreamYoutube(song.Url, CancelToken);
                 Console.WriteLine("Running audio...");
                 // /\ /\ WARNING /\ /\ hack detected ahead!!
                 while (!_process.HasExited) // wait for process to stop
@@ -283,20 +282,23 @@ namespace Discord_NetCore.Modules.Audio
         /// <summary>
         /// Skip to the next song in the queue
         /// </summary>
-        public void SkipSong()
+        public async Task SkipSong(CommandContext context)
         {
-            WillSkip = true;
+            if (context.User.Id == _songQueue.First().RequestedBy.User.Id)
+                WillSkip = true;
+            else
+                await context.Channel.SendMessageAsync("You didn't originally request the song!");
         }
         /// <summary>
         /// Created a new Song object based on a url and adds it to the queue
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public async Task AddToQueue(string url)
+        public async Task AddToQueue(string url, CommandContext context)
         {
             try
             {
-                var song = new Song(url);
+                var song = new Song(url, context);
                 await song.GetVideoInfo();
                 _songQueue.Enqueue(song);
             }
@@ -305,7 +307,18 @@ namespace Discord_NetCore.Modules.Audio
                 Console.WriteLine(e);
             }
         }
-
+        public async Task AddFileToQueue(string path, CommandContext context)
+        {
+            try
+            {
+                var song = new Song(path, context, true);
+                _songQueue.Enqueue(song);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
         /// <summary>
         /// Stream youtube audio data to discord voice channel. Works by youtube-dl piping video data to ffmpeg, 
         /// which then extracts the audio and outputs it, which is then read by a stream, which is then forced into the user's ear

@@ -54,6 +54,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(ex);
             }
         }
+        /*
         [Command("promote"), Summary("Spend some points to level up and get even more points.")]
         public async Task Promote()
         {
@@ -76,6 +77,7 @@ namespace Discord_NetCore.Modules
                 await ReplyAsync($"Promoted to level {permission + 1}");
             }
         }
+        */
         [Command("exchange"), Summary("Convert your points to carlin coins(TM)")]
         public async Task Exchange(string amount)
         {

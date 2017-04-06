@@ -10,11 +10,7 @@
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="**\*.cs" />
-    <EmbeddedResource Include="**\*.resx" />
-    <EmbeddedResource Include="compiler\resources\**\*" />
-  </ItemGroup>
+
   <ItemGroup>
     <Content Include="Binaries\Bot Configuration\asd.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

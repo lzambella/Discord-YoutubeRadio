@@ -193,7 +193,7 @@ namespace Discord_NetCore
 
                         var userId = ParseString(user.Mention);
                         var permission = await GetRank(userId);
-                        var points = (int)(Math.Pow(permission, 2)) / 50;
+                        var points = 1;
                         if (points < 1) points = 1;
                         command =
                             new SqlCommand("UPDATE DiscordUser SET GachiPoints = GachiPoints + @points WHERE DiscordId = @id",

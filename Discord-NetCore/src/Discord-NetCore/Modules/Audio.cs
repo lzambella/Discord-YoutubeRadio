@@ -55,11 +55,34 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e);
             }
         }
+        [Command("custom"), Summary("plays a direct song")]
+        public async Task PlayCustomSong(string path)
+        {
+            try
+            {
+                var audioPlayer = GetMusicPlayerForGuild();
+                if (audioPlayer == null)
+                    await ReplyAsync("I am not in a channel!");
+                else
+                {
+                    Console.WriteLine("Trying to play a song");
+                    await ReplyAsync("Playing a custom song...");
+                    await audioPlayer.AddFileToQueue(path, Context);
+                    if (audioPlayer.AutoPlay && audioPlayer.AudioFree)
+                    {
+                        await RunQueue();
+                    }
+                }
+            } catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
         [Command("skip"), Summary("Skip the currently running song")]
         public async Task SkipSongAsync()
         {
             var audioPlayer = GetMusicPlayerForGuild();
-            audioPlayer.SkipSong();
+            await audioPlayer.SkipSong(Context);
             await ReplyAsync("Skipping song!");
         }
         [Command("youtube", RunMode = RunMode.Async), Summary("Stream a youtube video"), Alias("y","stream")]
@@ -73,7 +96,7 @@ namespace Discord_NetCore.Modules
                 await ReplyAsync("I am currently not in a voice channel.");
             else
             {
-                await audioPlayer.AddToQueue(url);
+                await audioPlayer.AddToQueue(url, Context);
                 await ReplyAsync("Added the song to the queue.");
             }
             if (audioPlayer.AutoPlay && audioPlayer.AudioFree)
@@ -176,7 +199,7 @@ namespace Discord_NetCore.Modules
         public async Task SkipSong()
         {
             var audioPlayer = GetMusicPlayerForGuild();
-            audioPlayer.SkipSong();
+            audioPlayer.SkipSong(Context);
             await ReplyAsync("Skipping the current song!");
         }
 
