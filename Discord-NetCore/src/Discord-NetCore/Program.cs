@@ -54,7 +54,6 @@ namespace Discord_NetCore
         public static void Main(string[] args) => new Program().Start(args).GetAwaiter().GetResult();
 
         private Timer Timer { get; set; }
-        private Settings _botSettings { get; set; }
         /// <summary>
         /// Main program
         /// </summary>
@@ -62,21 +61,18 @@ namespace Discord_NetCore
         /// <returns></returns>
         public async Task Start(string[] args)
         {
-            XmlSerializer s = new XmlSerializer(typeof(Settings));
-            FileStream file = new FileStream("settings.xml", FileMode.Open);
-
-            XmlReader reader = XmlReader.Create(file);
-            _botSettings = (Settings)s.Deserialize(reader);
-            Console.WriteLine("Successfully read the settings file");
+            var discordToken = Environment.GetEnvironmentVariable("discordToken");
+            var databaseString = Environment.GetEnvironmentVariable("databaseString");
+            Console.WriteLine("Successfully read the settings");
 
             Console.WriteLine("Logging into server");
             var config = new DiscordSocketConfig {AudioMode = AudioMode.Both};
             Client = new DiscordSocketClient(config);
             commands = new CommandService();
 
-            await Client.LoginAsync(TokenType.Bot, _botSettings.DiscordToken);
+            await Client.LoginAsync(TokenType.Bot, discordToken);
 
-            Database = new DbHandler(_botSettings.DatabaseString);
+            Database = new DbHandler(databaseString);
 
             await Client.ConnectAsync();
             if (Client.ConnectionState == ConnectionState.Connected)
