@@ -11,7 +11,6 @@ namespace Discord_NetCore.Modules
     [Name("Audio")]
     public class AudioModule : ModuleBase
     {
-
         // Create a Join command, that will join the parameter or the user's current voice channel
         [Command("joinchannel", RunMode = RunMode.Async), Alias("join", "j", "voice"), Summary("Joins the voice channel the user is in")]
         public async Task JoinChannel()

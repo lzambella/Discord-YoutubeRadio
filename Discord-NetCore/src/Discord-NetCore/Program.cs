@@ -66,7 +66,10 @@ namespace Discord_NetCore
             Console.WriteLine("Successfully read the settings");
 
             Console.WriteLine("Logging into server");
-            var config = new DiscordSocketConfig {AudioMode = AudioMode.Both};
+            var config = new DiscordSocketConfig
+            {
+                ConnectionTimeout = 10000
+            };
             Client = new DiscordSocketClient(config);
             commands = new CommandService();
 
@@ -74,10 +77,7 @@ namespace Discord_NetCore
 
             Database = new DbHandler(databaseString);
 
-            await Client.ConnectAsync();
-            if (Client.ConnectionState == ConnectionState.Connected)
-                Console.WriteLine($"{DateTime.Now}: Successfully Logged in.");
-            else Console.WriteLine($"{DateTime.Now}: Error Something Happened.");
+            await Client.StartAsync();
             await InstallCommands();
             Client.MessageReceived += async (e) =>
             {

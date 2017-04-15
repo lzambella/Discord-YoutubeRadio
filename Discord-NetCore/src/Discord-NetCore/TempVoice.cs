@@ -117,7 +117,7 @@ namespace Discord_NetCore
             try
             {
                 var role = _role;
-                await user.AddRolesAsync(role);
+                //await user.AddRolesAsync(role);
             }
             catch (Exception e)
             {

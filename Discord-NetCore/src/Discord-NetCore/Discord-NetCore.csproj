@@ -377,7 +377,7 @@
     <None Include="Dockerfile" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="1.0.0-rc-00544" />
+    <PackageReference Include="Discord.Net" Version="1.0.0-rc2-00699" />
     <PackageReference Include="Microsoft.NETCore.App">
       <Version>1.1.0</Version>
     </PackageReference>

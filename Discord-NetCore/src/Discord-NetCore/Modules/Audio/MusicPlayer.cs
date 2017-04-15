@@ -65,7 +65,7 @@ namespace Discord_NetCore.Modules.Audio
         /// <summary>
         /// Allows sending messages to the channel
         /// </summary>
-        private CommandContext _context { get; set; }
+        private ICommandContext _context { get; set; }
         /// <summary>
         /// Stream process
         /// </summary>
@@ -74,7 +74,7 @@ namespace Discord_NetCore.Modules.Audio
         /// Set up a new music player
         /// </summary>
         /// <param name="context">Allows the object to send messages to the server</param>
-        public MusicPlayer(CommandContext context)
+        public MusicPlayer(ICommandContext context)
         {
             _context = context;
             AudioFree = true;
@@ -94,7 +94,6 @@ namespace Discord_NetCore.Modules.Audio
             // If the bot is connected to a voice channel and the user is in a different voice channel
             else if (AudioClient.ConnectionState == ConnectionState.Connected && !(chan.Id == ConnectedChannel.Id))
             {
-                await AudioClient.DisconnectAsync();
                 AudioClient = await chan.ConnectAsync();
                 ConnectedChannel = chan;
             }
@@ -108,7 +107,7 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         public async Task PlaySong(string song, CancellationToken cancelToken)
         {
-            using (var stream = AudioClient.CreatePCMStream(2880, bitrate: ConnectedChannel.Bitrate))
+            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music, 2880, ConnectedChannel.Bitrate))
             {
                 var process = Process.Start(new ProcessStartInfo
                 {
@@ -237,7 +236,7 @@ namespace Discord_NetCore.Modules.Audio
             var RecordingCancelToken = RecordingCancelSource.Token;
             await Task.Factory.StartNew(async () =>
             {
-                using (var stream = AudioClient.CreatePCMStream(2880, bitrate: ConnectedChannel.Bitrate))
+                using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music, 2880, ConnectedChannel.Bitrate))
                 {
                     while (true)
                     {
@@ -306,7 +305,7 @@ namespace Discord_NetCore.Modules.Audio
         /// <summary>
         /// Skip to the next song in the queue
         /// </summary>
-        public async Task SkipSong(CommandContext context)
+        public async Task SkipSong(ICommandContext context)
         {
             if (context.User.Id == _songQueue.First().RequestedBy.User.Id)
                 WillSkip = true;
@@ -318,7 +317,7 @@ namespace Discord_NetCore.Modules.Audio
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public async Task AddToQueue(string url, CommandContext context)
+        public async Task AddToQueue(string url, ICommandContext context)
         {
             try
             {
@@ -331,7 +330,7 @@ namespace Discord_NetCore.Modules.Audio
                 Console.WriteLine(e);
             }
         }
-        public async Task AddFileToQueue(string path, CommandContext context, bool isFile)
+        public async Task AddFileToQueue(string path, ICommandContext context, bool isFile)
         {
             try
             {
@@ -351,7 +350,7 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         private async Task StreamYoutube(string url, CancellationToken cancelToken)
         {
-            using (var stream = AudioClient.CreatePCMStream(2880, bitrate: ConnectedChannel.Bitrate))
+            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music, 2880, ConnectedChannel.Bitrate))
             {
                 _process = Process.Start(new ProcessStartInfo
                 {

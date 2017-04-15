@@ -183,9 +183,8 @@ namespace Discord_NetCore
                 }
                 if (minute >= 30)
                 {
-                    var usersAsync = Program.Client.GetGuild(215339016755740673).GetVoiceChannelAsync(215339863254368268).Result.GetUsersAsync();
+                    var users = Program.Client.GetGuild(215339016755740673).GetVoiceChannel(215339863254368268).Users;
                     Console.WriteLine($"{DateTime.Now}: It's Time! Adding points!");
-                    var users = await usersAsync.Flatten();
                     foreach (var user in users)
                     {
                         if (SkipIncrement(user))
@@ -228,8 +227,7 @@ namespace Discord_NetCore
         {
             try
             {
-                var usersAsync = Program.Client.GetGuild(215339016755740673).GetVoiceChannelAsync(215339863254368268).Result.GetUsersAsync();
-                var users = await usersAsync.Flatten();
+                var users = Program.Client.GetGuild(215339016755740673).GetVoiceChannel(215339863254368268).Users;
                 var userCount = users.Count(user => !user.IsBot);
                 //Console.WriteLine($"There are {userCount} users.");
                 return userCount > 2;
