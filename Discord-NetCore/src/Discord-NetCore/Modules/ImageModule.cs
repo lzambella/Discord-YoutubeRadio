@@ -85,7 +85,7 @@ namespace Discord_NetCore.Modules
             }
         }
         */
-        [Command("checkmeme"), Summary("Time until a new meme is avaliable")]
+        //[Command("checkmeme"), Summary("Time until a new meme is avaliable")]
         public async Task CheckMeme()
         {
             try

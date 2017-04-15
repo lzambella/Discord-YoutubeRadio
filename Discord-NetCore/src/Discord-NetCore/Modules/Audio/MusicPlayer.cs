@@ -106,7 +106,7 @@ namespace Discord_NetCore.Modules.Audio
         /// <param name="song">Song file</param>
         /// <param name="volume">Volume to play at</param>
         /// <returns></returns>
-        public async Task PlaySong(string song)
+        public async Task PlaySong(string song, CancellationToken cancelToken)
         {
             using (var stream = AudioClient.CreatePCMStream(2880, bitrate: ConnectedChannel.Bitrate))
             {
@@ -120,9 +120,33 @@ namespace Discord_NetCore.Modules.Audio
                     RedirectStandardOutput = true,
                     RedirectStandardError = false
                 });
-                await process.StandardOutput.BaseStream.CopyToAsync(stream);
-                await stream.FlushAsync();
-                process.WaitForExit();
+                try
+                {
+                    int blockSize = 1024;
+                    var buffer = new byte[blockSize];
+                    int byteCount = 1;
+                    do
+                    {
+                        // Don't send any data or read from the stream if the stream is supposed to be paused
+                        if (Paused) continue;
+
+                        if (cancelToken.IsCancellationRequested || byteCount == 0 || WillSkip)
+                            break;
+
+                        byteCount = await _process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
+                        buffer = AdjustVolume(buffer, Volume);
+                        await stream.WriteAsync(buffer, 0, blockSize);
+                    } while (byteCount > 0);
+                    _process.WaitForExit();
+                    await stream.FlushAsync();
+                    WillSkip = false;
+
+                }
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine("Stream writing cancelled.");
+                    WillSkip = false;
+                }
             }
         }
         /// <summary>
@@ -250,7 +274,7 @@ namespace Discord_NetCore.Modules.Audio
                 _songQueue.TryDequeue(out song);
                 await _context.Channel.SendMessageAsync($"Now playing: `{song.Title}`");
                 if (song.IsFile)
-                    await PlaySong(song.Url);
+                    await PlaySong(song.Url, CancelToken);
                 else
                     await StreamYoutube(song.Url, CancelToken);
                 Console.WriteLine("Running audio...");
@@ -307,11 +331,11 @@ namespace Discord_NetCore.Modules.Audio
                 Console.WriteLine(e);
             }
         }
-        public async Task AddFileToQueue(string path, CommandContext context)
+        public async Task AddFileToQueue(string path, CommandContext context, bool isFile)
         {
             try
             {
-                var song = new Song(path, context, true);
+                var song = new Song(path, context, isFile);
                 _songQueue.Enqueue(song);
             }
             catch (Exception e)

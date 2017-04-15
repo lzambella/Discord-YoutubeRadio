@@ -32,7 +32,7 @@ namespace Discord_NetCore.Modules
                 await ReplyAsync($"Moving to {Context.User.Mention}'s voice channel: {channel.Name}");
             }
         }
-
+        /*
         [Command("annoy"), Summary("Play a random sound effect"), Alias("sfx", "g")]
         public async Task Gachimuchi()
         {
@@ -54,7 +54,7 @@ namespace Discord_NetCore.Modules
 
                 Console.WriteLine(e);
             }
-        }
+        */
         [Command("custom"), Summary("plays a direct song")]
         public async Task PlayCustomSong(string path)
         {
@@ -67,7 +67,7 @@ namespace Discord_NetCore.Modules
                 {
                     Console.WriteLine("Trying to play a song");
                     await ReplyAsync("Playing a custom song...");
-                    await audioPlayer.AddFileToQueue(path, Context);
+                    await audioPlayer.AddFileToQueue(path, Context, true);
                     if (audioPlayer.AutoPlay && audioPlayer.AudioFree)
                     {
                         await RunQueue();
@@ -199,7 +199,7 @@ namespace Discord_NetCore.Modules
         public async Task SkipSong()
         {
             var audioPlayer = GetMusicPlayerForGuild();
-            audioPlayer.SkipSong(Context);
+            await audioPlayer.SkipSong(Context);
             await ReplyAsync("Skipping the current song!");
         }
 
