@@ -17,7 +17,8 @@
     "Newtonsoft.Json": "9.0.1",
     "System.Data.SqlClient": "4.3.0",
     "System.Runtime.Serialization.Primitives": "4.3.0",
-    "System.Threading.Tasks": "4.3.0"
+    "System.Threading.Tasks": "4.3.0",
+    "System.Diagnostics.Contracts": "4.3.0"
   },
 
   "frameworks": {
