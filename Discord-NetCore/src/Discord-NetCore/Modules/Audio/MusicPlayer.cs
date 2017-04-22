@@ -352,15 +352,27 @@ namespace Discord_NetCore.Modules.Audio
         {
             using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music))
             {
-                _process = Process.Start(new ProcessStartInfo
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
                 {
-                    // add way to execute bash if on linux
-                    FileName = "cmd",
-                    Arguments = $"/C youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = false,
-                });
+                    _process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "cmd",
+                        Arguments = $"/C youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = false,
+                    });
+                } else
+                {
+                    _process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "bash",
+                        Arguments = $"youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = false,
+                    });
+                }
                 try
                 {
                     Console.WriteLine("starting process...");
