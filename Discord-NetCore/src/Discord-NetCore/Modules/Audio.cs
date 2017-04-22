@@ -84,7 +84,7 @@ namespace Discord_NetCore.Modules
             await audioPlayer.SkipSong(Context);
             await ReplyAsync("Skipping song!");
         }
-        [Command("youtube", RunMode = RunMode.Async), Summary("Stream a youtube video"), Alias("y","stream")]
+        [Command("youtube", RunMode = RunMode.Async), Summary("Stream a youtube video"), Alias("y", "stream")]
         public async Task Youtube(string url)
         {
             var audioPlayer = GetMusicPlayerForGuild();
@@ -151,7 +151,7 @@ namespace Discord_NetCore.Modules
                 await ReplyAsync("Stream resumed!");
             }
         }
-        [Command("queue", RunMode = RunMode.Async), Summary("Prints the current queue"), Alias("q","check")]
+        [Command("queue", RunMode = RunMode.Async), Summary("Prints the current queue"), Alias("q", "check")]
         public async Task CheckQueue()
         {
             var audioPlayer = GetMusicPlayerForGuild();
@@ -200,6 +200,12 @@ namespace Discord_NetCore.Modules
             var audioPlayer = GetMusicPlayerForGuild();
             await audioPlayer.SkipSong(Context);
             await ReplyAsync("Skipping the current song!");
+        }
+        [Command("par")]
+        public async Task Parrot()
+        {
+            var audioPlayer = GetMusicPlayerForGuild();
+            await audioPlayer.RepeatAudio();
         }
 
         private MusicPlayer GetMusicPlayerForGuild()

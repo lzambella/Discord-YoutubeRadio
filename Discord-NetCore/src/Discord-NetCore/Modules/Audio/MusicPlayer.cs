@@ -107,9 +107,9 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         public async Task PlaySong(string song, CancellationToken cancelToken)
         {
-            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music, 2880, ConnectedChannel.Bitrate))
+            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music))
             {
-                var process = Process.Start(new ProcessStartInfo
+                _process = Process.Start(new ProcessStartInfo
                 {
                     FileName = "ffmpeg",
                     Arguments =
@@ -236,7 +236,7 @@ namespace Discord_NetCore.Modules.Audio
             var RecordingCancelToken = RecordingCancelSource.Token;
             await Task.Factory.StartNew(async () =>
             {
-                using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music, 2880, ConnectedChannel.Bitrate))
+                using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music))
                 {
                     while (true)
                     {
@@ -350,7 +350,7 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         private async Task StreamYoutube(string url, CancellationToken cancelToken)
         {
-            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music, 2880, ConnectedChannel.Bitrate))
+            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music))
             {
                 _process = Process.Start(new ProcessStartInfo
                 {
@@ -363,9 +363,10 @@ namespace Discord_NetCore.Modules.Audio
                 });
                 try
                 {
+                    Console.WriteLine("starting process...");
                     int blockSize = 1024;
                     var buffer = new byte[blockSize];
-                    int byteCount = 1; 
+                    int byteCount = 1;
                     do
                     {
                         // Don't send any data or read from the stream if the stream is supposed to be paused
@@ -390,5 +391,32 @@ namespace Discord_NetCore.Modules.Audio
                 }
             }
         }
+        public async Task audioTest()
+        {
+            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed))
+            {
+
+                try
+                {
+                    int blockSize = 1024;
+                    var buffer = new byte[blockSize];
+                    int byteCount = 1;
+                    do
+                    {
+
+                        byteCount = await stream.ReadAsync(buffer, 0, blockSize);
+                        buffer = AdjustVolume(buffer, Volume);
+                        await stream.WriteAsync(buffer, 0, blockSize);
+                    } while (byteCount > 0);
+
+                }
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine("Stream writing cancelled.");
+                    WillSkip = false;
+                }
+            }
+        }
     }
+
 }
