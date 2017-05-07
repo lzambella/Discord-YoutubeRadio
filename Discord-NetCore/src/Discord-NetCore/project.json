@@ -4,7 +4,7 @@
     "emitEntryPoint": true,
     "optimize": true,
     "allowUnsafe": true,
-    "platform": "anycpu",
+    "platform": "anycpu"
   },
   "runtimes": {
     "win10-x64": {},
