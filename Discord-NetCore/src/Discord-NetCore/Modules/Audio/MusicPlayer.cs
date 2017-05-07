@@ -370,7 +370,7 @@ namespace Discord_NetCore.Modules.Audio
                         _process = Process.Start(new ProcessStartInfo
                         {
                             FileName = "bash",
-                            Arguments = $"youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
+                            Arguments = $"/app/heroku_output/youtube-dl -q -o - {url} | /app/heroku_output/ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = false,
