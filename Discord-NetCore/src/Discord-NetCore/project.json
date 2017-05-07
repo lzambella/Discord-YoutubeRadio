@@ -4,7 +4,11 @@
     "emitEntryPoint": true,
     "optimize": true,
     "allowUnsafe": true,
-    "platform": "anycpu"
+    "platform": "anycpu",
+    "copyToOutput": [ "ffmpeg", "youtube-dl" ]
+  },
+  "publishOptions": {
+    "include":  ["youtube-dl", "ffmpeg"]
   },
   "runtimes": {
     "win10-x64": {},
@@ -20,7 +24,9 @@
     "System.Threading.Tasks": "4.3.0",
     "System.Diagnostics.Contracts": "4.3.0"
   },
-
+  "scripts": {
+    "postbuild": "chmod +x youtube-dl && chmod +x ffmpeg"
+  },
   "frameworks": {
     "netcoreapp1.1": {
       "imports": "dnxcore50"
