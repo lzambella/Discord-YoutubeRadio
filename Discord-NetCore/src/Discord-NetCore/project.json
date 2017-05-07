@@ -5,10 +5,6 @@
     "optimize": true,
     "allowUnsafe": true,
     "platform": "anycpu",
-    "copyToOutput": [ "ffmpeg", "youtube-dl" ]
-  },
-  "publishOptions": {
-    "include":  ["youtube-dl", "ffmpeg "]
   },
   "runtimes": {
     "win10-x64": {},
