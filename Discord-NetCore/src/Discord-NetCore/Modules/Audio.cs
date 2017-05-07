@@ -54,7 +54,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e);
             }
         */
-        [Command("custom"), Summary("plays a direct song")]
+        [Command("custom"), Summary("plays a direct song.")]
         public async Task PlayCustomSong(string path)
         {
             try
@@ -169,7 +169,7 @@ namespace Discord_NetCore.Modules
             else await ReplyAsync("Autoplay enabled!");
 
         }
-        [Command("stop", RunMode = RunMode.Async), Summary("Stops the audio player and clerars the queue")]
+        [Command("stop", RunMode = RunMode.Async), Summary("Stops the audio player and clears the queue.")]
         public async Task StopAudio()
         {
             try
@@ -200,12 +200,6 @@ namespace Discord_NetCore.Modules
             var audioPlayer = GetMusicPlayerForGuild();
             await audioPlayer.SkipSong(Context);
             await ReplyAsync("Skipping the current song!");
-        }
-        [Command("par")]
-        public async Task Parrot()
-        {
-            var audioPlayer = GetMusicPlayerForGuild();
-            await audioPlayer.RepeatAudio();
         }
 
         private MusicPlayer GetMusicPlayerForGuild()

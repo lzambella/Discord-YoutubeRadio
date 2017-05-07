@@ -49,24 +49,7 @@ namespace Discord_NetCore.Modules
             string output = $"```{stdout}```";
             await ReplyAsync(output);
         }
-        /*
-        [Command("tail"), Summary("Print last 20 lines of the log file (admin only)")]
-        public async Task tail()
-        {
-            if (Context.User.Id == Program.OwnerId)
-            {
-                var process = new Process();
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.FileName = "/usr/bin/tail";
-                process.StartInfo.Arguments = "-n 20 /home/ubuntu/nohup.out";
-                process.Start();
-                var stdout = await process.StandardOutput.ReadToEndAsync();
-                string output = $"```{stdout}```";
-                await ReplyAsync(output);
-            }
-        }
-        */
+
         [Command("help"), Summary("Prints help message")]
         public async Task Help([Summary("(Optional) Command Name")]string c = null)
         {

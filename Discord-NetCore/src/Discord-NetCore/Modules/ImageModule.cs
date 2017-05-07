@@ -13,10 +13,6 @@ namespace Discord_NetCore.Modules
     //[Name("Images")]
     public class ImageModule : ModuleBase
     {
-        /// <summary>
-        /// Facebook API Token remove this
-        /// </summary>
-        readonly string _token = Program.argv["FacebookToken"];
 
         //[Command("thereal"), Summary("Post a random The Real image")]
         public async Task Real()

@@ -52,7 +52,7 @@ namespace Discord_NetCore.Modules.Audio
         {
             var process = Process.Start(new ProcessStartInfo
             {
-                FileName = "youtube-dl",
+                FileName = "./Binaries/youtube-dl",
                 Arguments = $"-e --get-duration {Url} ",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,

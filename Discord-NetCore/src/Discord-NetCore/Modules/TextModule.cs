@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using System.Linq;
 
 namespace Discord_NetCore.Modules
 {
@@ -43,11 +44,11 @@ namespace Discord_NetCore.Modules
             try
             {
                 var user = Context.Message.Author as IGuildUser;
-                if (user.Id == Program.OwnerId)
+                if (user.Id == Program.OwnerId || user.Id == 157940364248875008)
                 {
                     if (s == null)
                         return;
-                    var num = Int32.Parse(s);
+                    var num = Int32.Parse(s) + 1;
                     var messages = await Context.Channel.GetMessagesAsync(num).Flatten();
                     await Context.Channel.DeleteMessagesAsync(messages);
                 }

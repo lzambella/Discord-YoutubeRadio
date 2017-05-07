@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -111,7 +112,7 @@ namespace Discord_NetCore.Modules.Audio
             {
                 _process = Process.Start(new ProcessStartInfo
                 {
-                    FileName = "ffmpeg",
+                    FileName = "Binaries\\ffmpeg",
                     Arguments =
                     $"-i \"{song}\" " +
                     "-f s16le -ar 48000 -ac 2 pipe:1 -loglevel quiet",
@@ -162,7 +163,7 @@ namespace Discord_NetCore.Modules.Audio
             for (var i = 0; i < songList.Count; i++)
             {
                 Song temp;
-                var rand = DateTime.Now.ToFileTimeUtc() % songList.Count;
+                var rand = DateTime.Now.ToFileTimeUtc() % songList.Count; // wahoo generate a new random number every time, even the same numbers
                 temp = songList[i];
                 songList[i] = songList[(int)rand];
                 songList[(int)rand] = temp;
@@ -352,31 +353,31 @@ namespace Discord_NetCore.Modules.Audio
         {
             using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music))
             {
-                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
-                {
-                    _process = Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "cmd",
-                        Arguments = $"/C youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = false,
-                    });
-                } else
-                {
-                    _process = Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "bash",
-                        Arguments = $"youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = false,
-                    });
-                }
                 try
                 {
-                    Console.WriteLine("starting process...");
-                    int blockSize = 1024;
+                    if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                    {
+                        _process = Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "cmd",
+                            Arguments = $"/C Binaries\\youtube-dl.exe -q -o - {url} | ffmpeg.exe -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = false,
+                        });
+                    } else
+                    {
+                        _process = Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "bash",
+                            Arguments = $"youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = false,
+                        });
+                    }
+                    Console.WriteLine("Starting process...");
+                    int blockSize = 2048;
                     var buffer = new byte[blockSize];
                     int byteCount = 1;
                     do
@@ -400,6 +401,10 @@ namespace Discord_NetCore.Modules.Audio
                 {
                     Console.WriteLine("Stream writing cancelled.");
                     WillSkip = false;
+                }
+                catch (FileNotFoundException)
+                {
+                    await _context.Channel.SendMessageAsync("Error, Youtube-dl and/or ffmpeg can not be found");
                 }
             }
         }

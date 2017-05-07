@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 
 namespace Discord_NetCore.Modules
 {
-    [Name("Management")]
+    //[Name("Management")]
     public class ManagementModule : ModuleBase
     {
         //[Command("createteamchannel"), Summary("Creates a temporary voice channel that only a certain roll can enter")]
         public async Task CreateTeamChannel([Summary("Name")]string name, [Summary("Duration in minutes")]int duration)
         {
         }
-        /*
-        [Command("mute"), Summary("Server mute an annoying retard")]
+     
+        [Command("mute"), Summary("Server mute someone")]
         public async Task Mute([Summary("Mention")]IUser user)
         {
             await ReplyAsync($"Muting {user.Mention}");
@@ -42,7 +42,6 @@ namespace Discord_NetCore.Modules
             };
             await voiceUser.ModifyAsync(propAction);
         }
-        */
 
     }
 }
