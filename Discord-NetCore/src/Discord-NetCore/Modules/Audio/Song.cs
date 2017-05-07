@@ -64,10 +64,10 @@ namespace Discord_NetCore.Modules.Audio
             }
             else
             {
-                Console.WriteLine(Directory.GetCurrentDirectory());
+                Console.WriteLine(Directory.GetFiles(Directory.GetCurrentDirectory()));
                 process = Process.Start(new ProcessStartInfo
                 {
-                    FileName = "~/heroku_output/youtube-dl",
+                    FileName = "/app/heroku_output/youtube-dl",
                     Arguments = $"-e --get-duration {Url} ",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
