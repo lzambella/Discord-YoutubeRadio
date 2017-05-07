@@ -7,6 +7,9 @@
     "platform": "anycpu",
     "copyToOutput": [ "ffmpeg", "youtube-dl" ]
   },
+  "publishOptions": {
+    "include":  ["youtube-dl", "ffmpeg "]
+  },
   "runtimes": {
     "win10-x64": {},
     "ubuntu.16.04-x64": {},
