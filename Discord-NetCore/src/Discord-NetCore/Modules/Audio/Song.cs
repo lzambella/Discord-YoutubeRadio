@@ -50,14 +50,29 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         public async Task GetVideoInfo()
         {
-            var process = Process.Start(new ProcessStartInfo
+            Process process;
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
             {
-                FileName = "./Binaries/youtube-dl",
-                Arguments = $"-e --get-duration {Url} ",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = false
-            });
+                process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "./Binaries/youtube-dl",
+                    Arguments = $"-e --get-duration {Url} ",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = false
+                });
+            }
+            else
+            {
+                process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "youtube-dl",
+                    Arguments = $"-e --get-duration {Url} ",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = false,
+                });
+            }
             try
             {
                 var streamReader = new StreamReader(process.StandardOutput.BaseStream);
