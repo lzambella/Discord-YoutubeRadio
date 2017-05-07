@@ -4,7 +4,8 @@
     "emitEntryPoint": true,
     "optimize": true,
     "allowUnsafe": true,
-    "platform": "anycpu"
+    "platform": "anycpu",
+    "copyToOutput": [ "ffmpeg", "youtube-dl" ]
   },
   "runtimes": {
     "win10-x64": {},
@@ -26,5 +27,5 @@
       "imports": "dnxcore50"
     }
   }
-     
+
 }
