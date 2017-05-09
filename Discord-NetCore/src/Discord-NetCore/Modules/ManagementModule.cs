@@ -56,6 +56,7 @@ namespace Discord_NetCore.Modules
             } catch (Exception e)
             {
                 Console.WriteLine("FFMPEG error!");
+                Console.WriteLine(e);
             }
             try
             {
@@ -69,6 +70,7 @@ namespace Discord_NetCore.Modules
             catch (Exception e)
             {
                 Console.WriteLine("youtube-dl error!");
+                Console.WriteLine(e);
             }
         }
     }
