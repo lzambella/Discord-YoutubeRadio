@@ -74,7 +74,7 @@ namespace Discord_NetCore.Modules.Audio
                     Console.WriteLine();
                     process = Process.Start(new ProcessStartInfo
                     {
-                        FileName = "~/vendor/youtube-dl/youtube-dl",
+                        FileName = "/app/vendor/youtube-dl/youtube-dl",
                         Arguments = $"-e --get-duration {Url} ",
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
