@@ -81,14 +81,6 @@ namespace Discord_NetCore.Modules.Audio
                         RedirectStandardError = false,
                     });
                 }
-            }
-            catch (Exception)
-            {
-
-                Console.WriteLine("Youtube-dl Error...");
-            }
-            try
-            {
                 var streamReader = new StreamReader(process.StandardOutput.BaseStream);
                 var title = await streamReader.ReadLineAsync();
                 var duration = await streamReader.ReadLineAsync();
