@@ -401,9 +401,6 @@
     <None Update="ffmpeg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="youtube-dl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <PropertyGroup Label="Configuration">
     <Optimize>False</Optimize>

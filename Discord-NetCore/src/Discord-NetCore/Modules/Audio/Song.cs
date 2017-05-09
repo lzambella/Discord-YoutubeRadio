@@ -50,34 +50,42 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         public async Task GetVideoInfo()
         {
-            Process process;
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            try
             {
-                process = Process.Start(new ProcessStartInfo
+                Process process;
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
                 {
-                    FileName = "./Binaries/youtube-dl.exe",
-                    Arguments = $"-e --get-duration {Url} ",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = false
-                });
-            }
-            else
-            {
-                var files = Directory.GetFiles(Directory.GetCurrentDirectory());
-                foreach (var file in files)
-                {
-                    Console.WriteLine(file);
+                    process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "./Binaries/youtube-dl.exe",
+                        Arguments = $"-e --get-duration {Url} ",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = false
+                    });
                 }
-                Console.WriteLine();
-                process = Process.Start(new ProcessStartInfo
+                else
                 {
-                    FileName = "youtube-dl",
-                    Arguments = $"-e --get-duration {Url} ",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = false,
-                });
+                    var files = Directory.GetFiles(Directory.GetCurrentDirectory());
+                    foreach (var file in files)
+                    {
+                        Console.WriteLine(file);
+                    }
+                    Console.WriteLine();
+                    process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "youtube-dl",
+                        Arguments = $"-e --get-duration {Url} ",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = false,
+                    });
+                }
+            }
+            catch (Exception)
+            {
+
+                Console.WriteLine("Youtube-dl Error...");
             }
             try
             {
