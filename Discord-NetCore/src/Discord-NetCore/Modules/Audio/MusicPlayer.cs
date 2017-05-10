@@ -387,9 +387,11 @@ namespace Discord_NetCore.Modules.Audio
 
                         if (cancelToken.IsCancellationRequested || byteCount == 0 || WillSkip)
                             break;
-
+                        Console.WriteLine("Getting bytecount...");
                         byteCount = await _process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
+                        Console.WriteLine("Adjusting volume..");
                         buffer = AdjustVolume(buffer, Volume);
+                        Console.WriteLine("Sending the stream");
                         await stream.WriteAsync(buffer, 0, blockSize);
                     } while (byteCount > 0);
                     _process.WaitForExit();
