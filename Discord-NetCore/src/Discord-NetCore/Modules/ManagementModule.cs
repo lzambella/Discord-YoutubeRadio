@@ -16,34 +16,7 @@ namespace Discord_NetCore.Modules
         {
         }
      
-        //[Command("mute"), Summary("Server mute someone")]
-        public async Task Mute([Summary("Mention")]IUser user)
-        {
-            await ReplyAsync($"Muting {user.Mention}");
-            var voiceChannel = (user as IGuildUser)?.VoiceChannel ?? null;
-            if (voiceChannel == null) return;
-            var voiceUser = await voiceChannel.GetUserAsync(user.Id);
-            Action<GuildUserProperties> propAction = delegate (GuildUserProperties g)
-            {
-                g.Mute = true;
-            };
-            await voiceUser.ModifyAsync(propAction);
-        }
-        //[Command("unmute"), Summary("Unmute a punished noob")]
-        public async Task Unmute([Summary("Mention")]IUser user)
-        {
-            var guildUser = Context.User as IGuildUser;
-            
-            var voiceChannel = (user as IGuildUser)?.VoiceChannel ?? null;
-            if (voiceChannel == null) return;
-            var voiceUser = await voiceChannel.GetUserAsync(user.Id);
-            Action<GuildUserProperties> propAction = delegate (GuildUserProperties g)
-            {
-                g.Mute = false;
-            };
-            await voiceUser.ModifyAsync(propAction);
-        }
-        [Command("testbin")]
+        [Command("check"), Summary("Check if required binaries are available")]
         public async Task CheckApps()
         {
             try
@@ -52,11 +25,10 @@ namespace Discord_NetCore.Modules
                     FileName = "ffmpeg"
                 });
                 process.Start();
-                Console.WriteLine("FFMPEG found!");
-            } catch (Exception e)
+                await Context.Channel.SendMessageAsync("FFMPEG found!");
+            } catch (System.IO.FileNotFoundException)
             {
-                Console.WriteLine("FFMPEG error!");
-                Console.WriteLine(e);
+                await Context.Channel.SendMessageAsync("FFMPEG not found!");
             }
             try
             {
@@ -65,12 +37,11 @@ namespace Discord_NetCore.Modules
                     FileName = "youtube-dl"
                 });
                 process.Start();
-                Console.WriteLine("youtube-dl found!");
+                await Context.Channel.SendMessageAsync("youtube-dl found!");
             }
-            catch (Exception e)
+            catch (System.IO.FileNotFoundException)
             {
-                Console.WriteLine("youtube-dl error!");
-                Console.WriteLine(e);
+                await Context.Channel.SendMessageAsync("youtube-dl error!");
             }
         }
     }

@@ -20,6 +20,7 @@ namespace Discord_NetCore.Modules
                 var guild = Program.Client.GetGuild(Context.Channel.Id);
 
                 var userDM = await guild.GetUser(id).CreateDMChannelAsync();
+                
                 for (var x = 0; x < 5; x++)
                     await userDM.SendMessageAsync("You are being annoying!!!! Get On!!!!", true);
             }
@@ -44,6 +45,7 @@ namespace Discord_NetCore.Modules
             try
             {
                 var user = Context.Message.Author as IGuildUser;
+                
                 if (user.Id == Program.OwnerId || user.Id == 157940364248875008)
                 {
                     if (s == null)

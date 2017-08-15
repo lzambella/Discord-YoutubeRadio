@@ -39,15 +39,7 @@ namespace Discord_NetCore.Modules
         [Command("sysinfo"), Summary("Print system information")]
         public async Task hw()
         {
-            var process = new Process();
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.FileName = "/usr/bin/lshw";
-            process.StartInfo.Arguments = "-short";
-            process.Start();
-            var stdout = await process.StandardOutput.ReadToEndAsync();
-            string output = $"```{stdout}```";
-            await ReplyAsync(output);
+            await Program.Client.SetStatusAsync(UserStatus.Invisible);
         }
 
         [Command("help"), Summary("Prints help message")]

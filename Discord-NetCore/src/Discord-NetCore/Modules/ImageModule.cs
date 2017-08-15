@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Newtonsoft.Json;
+using FacebookSharp;
+using static FacebookSharp.GraphAPI.ApiParameters.PhotoField;
+using FacebookSharp.GraphAPI.ApiParameters;
 
 namespace Discord_NetCore.Modules
 {
@@ -33,55 +36,28 @@ namespace Discord_NetCore.Modules
             var files = Directory.GetFiles(directory);
             return files[rand.Next(files.Length)];
         }
-        /*
-        [Command("randomeme"), Summary("Get a random randomly generated meme")]
-        public async Task Memes()
+        [Command("meme"), Summary("Gets the latest randomly generated meme.")]
+        public async Task MeMe()
         {
             try
             {
-                // If we already loaded the json
-                if (Data != null && Data.data.Any())
-                {
-                    var linkList = Data.data;
-                    int randNum;
-                    var time = DateTime.Now.ToFileTime();
-                    randNum = (int)(time) % 3000;
-                    Console.WriteLine(randNum);
-                    var latestMemeLink = linkList[randNum].images.First().source;
-
-                    await ReplyAsync(latestMemeLink);
-                    return;
-                }
-
-                // Loads the json content into a variable for quicker access
-                var url = $"https://graph.facebook.com/v2.5/421109484727629/photos?access_token={_token}&pretty=0&fields=images&type=uploaded&limit=3000";
-                var request = WebRequest.Create(url);
-                request.ContentType = "application/json; charset=utf-8";
-                var response = (HttpWebResponse)await request.GetResponseAsync();
-                if (response != null)
-                {
-                    using (var sr = new StreamReader(response.GetResponseStream()))
-                    {
-                        var json = await sr.ReadToEndAsync();
-                        var data = JsonConvert.DeserializeObject<photojson>(json);
-                        var linkList = data.data;
-                        Console.WriteLine(linkList.Count());
-                        int randNum;
-                        var time = DateTime.Now.ToFileTime();
-                        randNum = (int) Math.Abs((time / 100)%3000);
-                        Console.WriteLine(randNum);
-                        var latestMemeLink = linkList[randNum].images.First().source;
-
-                        await ReplyAsync(latestMemeLink);
-                    }
-                }
-            } catch (Exception e)
+                var token = Program.FacebookToken;
+                // Get the latest meme and post it to the general chat
+                var graphApi = new GraphApi(token, GraphApi.ApiVersion.TwoEight);
+                var page = await graphApi.GetPage("1708210979407800");
+                var fields = new PhotoField();
+                fields.Fields.Add(PhotoFields.Source);
+                fields.Fields.Add(PhotoFields.Images);
+                var images = await page.GetPhotos(fields, true);
+                var meme = images.PhotoNodes.First().Images.First().Source;
+                await ReplyAsync($"Here's the latest meme: {meme}");
+            }
+            catch (Exception e)
             {
                 Console.WriteLine(e);
             }
         }
-        */
-        //[Command("checkmeme"), Summary("Time until a new meme is avaliable")]
+        [Command("checkmeme"), Summary("Time until a new meme is avaliable")]
         public async Task CheckMeme()
         {
             try

@@ -11,11 +11,13 @@ using Discord.WebSocket;
 using System.Xml.Serialization;
 using System.IO;
 using System.Xml;
+using FacebookSharp;
 
 namespace Discord_NetCore
 {
     public class Program
     {
+        public static bool DEBUG = true;
         // Create an IAudioClient, and store it for later use
         public static IAudioClient Audio { get; set; }
         /// <summary>
@@ -45,14 +47,14 @@ namespace Discord_NetCore
         /// </summary>
         public static Dictionary<ulong, Modules.Audio.MusicPlayer> MusicPlayers { get; set; } = new Dictionary<ulong, Modules.Audio.MusicPlayer>();
 
-        private DependencyMap map;
+        //private DependencyMap map;
         private string LatestMeme { get; set; }
         /// <summary>
         /// Run the main program asynchronously
         /// </summary>
         /// <param name="args"></param>
         public static void Main(string[] args) => new Program().Start(args).GetAwaiter().GetResult();
-
+        public static string FacebookToken { get; private set; }
         private Timer Timer { get; set; }
         /// <summary>
         /// Main program
@@ -63,9 +65,11 @@ namespace Discord_NetCore
         {
             var discordToken = Environment.GetEnvironmentVariable("discordToken");
             var databaseString = Environment.GetEnvironmentVariable("databaseString");
+            FacebookToken = Environment.GetEnvironmentVariable("FacebookToken");
             Console.WriteLine("Successfully read the settings");
 
             Console.WriteLine("Logging into server");
+
             var config = new DiscordSocketConfig
             {
                 ConnectionTimeout = 10000
@@ -97,8 +101,15 @@ namespace Discord_NetCore
                     Console.WriteLine(ex);
                 }
             };
+            Client.Connected +=  async () =>
+            {
+                await Client.SetGameAsync("Bose of this gym.");
+                Console.WriteLine("Successfully logged in.");
+                Console.WriteLine($"Connected to {Client.Guilds.Count} servers!");
+            };
             //Timer = new Timer(ImagePoster, null, 6000, 6000);
             await Task.Delay(-1);
+
         }
 
         public async Task InstallCommands()
@@ -121,11 +132,10 @@ namespace Discord_NetCore
             var context = new CommandContext(Client, message);
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed succesfully)
-            var result = await commands.ExecuteAsync(context, argPos, map);
+            var result = await commands.ExecuteAsync(context, argPos);
             if (result.IsSuccess)
                 Console.WriteLine($"{DateTime.Now}: Command request from {messageParam.Author.Username}. Command: {messageParam.Content}.");
         }
-        /*
         /// <summary>
         /// Posts a random meme to the chat if there is a new meme
         /// </summary>
@@ -148,10 +158,9 @@ namespace Discord_NetCore
                 // Get the latest meme and post it to the general chat
                 var textChannel = await guild.GetTextChannelAsync(215339016755740673);
                 var graphApi = new GraphApi(token, GraphApi.ApiVersion.TwoEight);
-                var page = await graphApi.GetPage("421109484727629");
-                var param = new ApiField();
-                param.Fields.Add("images");
-                var images = await page.GetPhotos(param, true);
+                var page = await graphApi.GetPage("1708210979407800");
+
+                var images = await page.GetPhotos(true);
                 var meme = images.PhotoNodes.First().Images.First().Source;
                 if (meme.Equals(LatestMeme))
                     return;
@@ -164,7 +173,6 @@ namespace Discord_NetCore
                 Console.WriteLine(e);
             }
         }
-        */
     }
 }
 

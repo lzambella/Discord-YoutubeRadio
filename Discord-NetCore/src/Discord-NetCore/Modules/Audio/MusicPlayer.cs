@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Audio;
+using Discord.Audio.Streams;
 using Discord.Commands;
 using System;
 using System.Collections.Concurrent;
@@ -41,8 +42,8 @@ namespace Discord_NetCore.Modules.Audio
         /// <summary>
         /// Thread safe Song queue
         /// </summary>
-        private ConcurrentQueue<Song> _songQueue { get; set; } = new ConcurrentQueue<Song>();
-
+        public ConcurrentQueue<Song> _songQueue { get; private set; } = new ConcurrentQueue<Song>();
+    
         /// <summary>
         /// Thread for running an audio stream
         /// </summary>
@@ -80,6 +81,7 @@ namespace Discord_NetCore.Modules.Audio
             _context = context;
             AudioFree = true;
         }
+        public Song CurrentSong { get; private set; }
         /// <summary>
         /// Attempts to move the bot to an audio channel
         /// </summary>
@@ -222,8 +224,9 @@ namespace Discord_NetCore.Modules.Audio
 
                 if (!AudioFree)
                     AudioFree = true;
-            } catch (Exception)
+            } catch (Exception e)
             {
+                Console.WriteLine(e);
                 throw;
             }
         }
@@ -237,16 +240,7 @@ namespace Discord_NetCore.Modules.Audio
             var RecordingCancelToken = RecordingCancelSource.Token;
             await Task.Factory.StartNew(async () =>
             {
-                using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music))
-                {
-                    while (true)
-                    {
-                        var buffer = new byte[1024];
-                        await stream.ReadAsync(buffer, 0, 1024);
-                        await stream.WriteAsync(buffer, 0, 1024);
-                        
-                    }
-                }
+                await audioTest();
             });
         }
         /// <summary>
@@ -272,11 +266,12 @@ namespace Discord_NetCore.Modules.Audio
                 CancelToken = AudioCancelSource.Token;
                 Song song;
                 _songQueue.TryDequeue(out song);
-                await _context.Channel.SendMessageAsync($"Now playing: `{song.Title}`");
-                if (song.IsFile)
-                    await PlaySong(song.Url, CancelToken);
+                CurrentSong = song;
+                await _context.Channel.SendMessageAsync($"Now playing: `{CurrentSong.Title}`");
+                if (CurrentSong.IsFile)
+                    await PlaySong(CurrentSong.Url, CancelToken);
                 else
-                    await StreamYoutube(song.Url, CancelToken);
+                    await StreamYoutube(CurrentSong.Url, CancelToken);
                 Console.WriteLine("Running audio...");
                 // /\ /\ WARNING /\ /\ hack detected ahead!!
                 while (!_process.HasExited) // wait for process to stop
@@ -295,9 +290,17 @@ namespace Discord_NetCore.Modules.Audio
         {
             var str = "";
             var i = 1;
+            try
+            {
+                str += $"`Current Song: {CurrentSong.Title} Length: {CurrentSong.Length}\n\n";
+            } catch (NullReferenceException)
+            {
+                if (Program.DEBUG)
+                    Console.WriteLine("No song is currently playing. Null reference error.");
+            }
             foreach (var song in _songQueue)
             {
-                str += $"{i} : {song.Title}\n";
+                str += $"{i} : {song.Title} -- {song.Length}\n";
                 i++;
             }
             return str;
@@ -308,10 +311,31 @@ namespace Discord_NetCore.Modules.Audio
         /// </summary>
         public async Task SkipSong(ICommandContext context)
         {
-            if (context.User.Id == _songQueue.First().RequestedBy.User.Id)
+            var song = _songQueue.First();
+            if (context.User.Id == song.RequestedBy.User.Id)
+
+            {
+                await context.Channel.SendMessageAsync($"{context.User} is skipping their own song.");
                 WillSkip = true;
+            }
+            else if (song.UsersVoted.Any(user => user.User.Id == context.User.Id))
+            {
+                await context.Channel.SendMessageAsync("You have already voted.");
+            }
             else
-                await context.Channel.SendMessageAsync("You didn't originally request the song!");
+            {
+                var voiceUsers = await ConnectedChannel.GetUsersAsync().Flatten();
+                var requiredVotes = voiceUsers.Count(user => !user.IsBot) / 2; // Half the users in voice 
+                song.SkipVotes++;
+                song.UsersVoted.Add(context);
+                await context.Channel.SendMessageAsync($"Votes: {song.SkipVotes}/{requiredVotes}");
+                if (song.SkipVotes >= requiredVotes && !WillSkip)
+                {
+                    WillSkip = true;
+                    await context.Channel.SendMessageAsync("Skipping song!");
+                    song.SkipVotes = 0;
+                }
+            }
         }
         /// <summary>
         /// Created a new Song object based on a url and adds it to the queue
@@ -355,12 +379,13 @@ namespace Discord_NetCore.Modules.Audio
             {
                 try
                 {
+
                     if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
                     {
                         _process = Process.Start(new ProcessStartInfo
                         {
                             FileName = "cmd",
-                            Arguments = $"/C Binaries\\youtube-dl.exe -q -o - {url} | ffmpeg.exe -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 ",
+                            Arguments = $"/C Binaries\\youtube-dl.exe --hls-prefer-native -q -o - {url} | Binaries\\ffmpeg.exe -i - -f s16le -ar 48000 -ac 2 -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 10  -loglevel quiet pipe:1 ",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = false,
@@ -370,14 +395,14 @@ namespace Discord_NetCore.Modules.Audio
                         _process = Process.Start(new ProcessStartInfo
                         {
                             FileName = "bash",
-                            Arguments = $"-c \" /app/vendor/youtube-dl/youtube-dl -q -o - {url} | /app/vendor/ffmpeg/ffmpeg -i - -f s16le -ar 48000 -ac 2 -loglevel quiet pipe:1 \" ",
+                            Arguments = $"-c \" youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 2 -loglevel quiet pipe:1 \" ",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = false,
                         });
                     }
                     Console.WriteLine("Starting process...");
-                    int blockSize = 2048;
+                    int blockSize = 4096;
                     var buffer = new byte[blockSize];
                     int byteCount = 1;
                     do
@@ -387,11 +412,8 @@ namespace Discord_NetCore.Modules.Audio
 
                         if (cancelToken.IsCancellationRequested || byteCount == 0 || WillSkip)
                             break;
-                        Console.WriteLine("Getting bytecount...");
                         byteCount = await _process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
-                        Console.WriteLine("Adjusting volume..");
                         buffer = AdjustVolume(buffer, Volume);
-                        Console.WriteLine("Sending the stream");
                         await stream.WriteAsync(buffer, 0, blockSize);
                     } while (byteCount > 0);
                     _process.WaitForExit();
@@ -402,6 +424,8 @@ namespace Discord_NetCore.Modules.Audio
                 catch (OperationCanceledException)
                 {
                     Console.WriteLine("Stream writing cancelled.");
+                    _process.WaitForExit();
+                    await stream.FlushAsync();
                     WillSkip = false;
                 }
                 catch (FileNotFoundException)
@@ -414,19 +438,19 @@ namespace Discord_NetCore.Modules.Audio
         {
             using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed))
             {
-
                 try
                 {
+                    RTPReadStream test = new RTPReadStream(stream);
                     int blockSize = 1024;
                     var buffer = new byte[blockSize];
                     int byteCount = 1;
                     do
                     {
 
-                        byteCount = await stream.ReadAsync(buffer, 0, blockSize);
+                        byteCount = await test.ReadAsync(buffer, 0, blockSize);
                         buffer = AdjustVolume(buffer, Volume);
                         await stream.WriteAsync(buffer, 0, blockSize);
-                    } while (byteCount > 0);
+                    } while (true);
 
                 }
                 catch (OperationCanceledException)

@@ -1,5 +1,6 @@
 ﻿using Discord.Commands;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -14,7 +15,11 @@ namespace Discord_NetCore.Modules.Audio
         public string Title { get; private set; }
         public string Length { get; private set; }
         private string[] Parameters { get; set; }
+        public short SkipVotes { get; set; }
+
+
         public ICommandContext RequestedBy { get; private set; }
+        public IList<ICommandContext> UsersVoted { get; set; }
 
         public Song(string url)
         {
@@ -74,7 +79,7 @@ namespace Discord_NetCore.Modules.Audio
                     Console.WriteLine();
                     process = Process.Start(new ProcessStartInfo
                     {
-                        FileName = "/app/vendor/youtube-dl/youtube-dl",
+                        FileName = "youtube-dl",
                         Arguments = $"-e --get-duration {Url} ",
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
