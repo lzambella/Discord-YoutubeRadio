@@ -99,6 +99,7 @@ namespace Discord_NetCore.Modules
             else
             {
                 await audioPlayer.AddToQueue(url, Context);
+                await Context.Message.DeleteAsync();
                 await ReplyAsync("Added the song to the queue.");
             }
             if (audioPlayer.AutoPlay && audioPlayer.AudioFree)

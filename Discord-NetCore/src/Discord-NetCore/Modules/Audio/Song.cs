@@ -16,7 +16,7 @@ namespace Discord_NetCore.Modules.Audio
         public string Length { get; private set; }
         private string[] Parameters { get; set; }
         public short SkipVotes { get; set; }
-
+        public string DirectLink { get; private set; }
 
         public ICommandContext RequestedBy { get; private set; }
         public IList<ICommandContext> UsersVoted { get; set; }
@@ -93,11 +93,25 @@ namespace Discord_NetCore.Modules.Audio
                 process.Dispose();
                 Title = title;
                 Length = duration;
+
+                // hacky way to get the direct link
+                process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "./Binaries/youtube-dl.exe",
+                    Arguments = $"-x -g \"{Url}\" ",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = false
+                });
+                streamReader = new StreamReader(process.StandardOutput.BaseStream);
+                DirectLink = await streamReader.ReadLineAsync();
+                Console.WriteLine(DirectLink);
             }
             catch (Exception)
             {
                 Title = "unknown";
                 Length = "unknown";
+                DirectLink = "unknown";
             }
         }
 

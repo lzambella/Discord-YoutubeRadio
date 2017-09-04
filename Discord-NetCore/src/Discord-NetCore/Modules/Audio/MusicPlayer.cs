@@ -269,9 +269,9 @@ namespace Discord_NetCore.Modules.Audio
                 CurrentSong = song;
                 await _context.Channel.SendMessageAsync($"Now playing: `{CurrentSong.Title}`");
                 if (CurrentSong.IsFile)
-                    await PlaySong(CurrentSong.Url, CancelToken);
+                    await PlaySong(CurrentSong.DirectLink, CancelToken);
                 else
-                    await StreamYoutube(CurrentSong.Url, CancelToken);
+                    await StreamYoutube(CurrentSong.DirectLink, CancelToken);
                 Console.WriteLine("Running audio...");
                 // /\ /\ WARNING /\ /\ hack detected ahead!!
                 while (!_process.HasExited) // wait for process to stop
@@ -382,6 +382,7 @@ namespace Discord_NetCore.Modules.Audio
 
                     if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
                     {
+                        /*
                         _process = Process.Start(new ProcessStartInfo
                         {
                             FileName = "cmd",
@@ -389,6 +390,17 @@ namespace Discord_NetCore.Modules.Audio
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = false,
+                        });
+                        */
+                        _process = Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "Binaries\\ffmpeg",
+                            Arguments =
+                             $"-i \"{url}\" " +
+                            "-f s16le -ar 48000 -ac 2 pipe:1 -loglevel quiet",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = false
                         });
                     } else
                     {
