@@ -31,6 +31,7 @@ namespace Discord_NetCore
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                Console.WriteLine("Error establishing a connection... Database commands disabled");
             }
         }
         public async Task<int> GetPoints(string discordId)

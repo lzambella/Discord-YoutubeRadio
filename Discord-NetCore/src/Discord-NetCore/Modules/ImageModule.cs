@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Newtonsoft.Json;
-using FacebookSharp;
-using static FacebookSharp.GraphAPI.ApiParameters.PhotoField;
-using FacebookSharp.GraphAPI.ApiParameters;
+//using FacebookSharp;
+//sing static FacebookSharp.GraphAPI.ApiParameters.PhotoField;
+//using FacebookSharp.GraphAPI.ApiParameters;
 
 namespace Discord_NetCore.Modules
 {
@@ -36,6 +36,7 @@ namespace Discord_NetCore.Modules
             var files = Directory.GetFiles(directory);
             return files[rand.Next(files.Length)];
         }
+        /*
         [Command("meme"), Summary("Gets the latest randomly generated meme.")]
         public async Task MeMe()
         {
@@ -57,6 +58,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e);
             }
         }
+        */
         [Command("checkmeme"), Summary("Time until a new meme is avaliable")]
         public async Task CheckMeme()
         {

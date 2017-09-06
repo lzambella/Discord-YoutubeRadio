@@ -78,6 +78,7 @@ namespace Discord_NetCore.Modules
             }
         }
         */
+        /*
         [Command("exchange"), Summary("Convert your points to carlin coins(TM)")]
         public async Task Exchange(string amount)
         {
@@ -102,6 +103,7 @@ namespace Discord_NetCore.Modules
 
 
         }
+        */
         [Command("rankleaderboard"), Summary("Check rank leader board")]
         public async Task Rank()
         {

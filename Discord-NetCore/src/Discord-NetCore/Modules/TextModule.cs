@@ -19,7 +19,7 @@ namespace Discord_NetCore.Modules
                 var id = ulong.Parse(Program.Database.ParseString(nickMention));
                 var guild = Program.Client.GetGuild(Context.Channel.Id);
 
-                var userDM = await guild.GetUser(id).CreateDMChannelAsync();
+                var userDM = await guild.GetUser(id).GetOrCreateDMChannelAsync();
                 
                 for (var x = 0; x < 5; x++)
                     await userDM.SendMessageAsync("You are being annoying!!!! Get On!!!!", true);

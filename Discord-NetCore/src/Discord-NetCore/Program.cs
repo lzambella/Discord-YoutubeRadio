@@ -11,7 +11,7 @@ using Discord.WebSocket;
 using System.Xml.Serialization;
 using System.IO;
 using System.Xml;
-using FacebookSharp;
+//using FacebookSharp;
 
 namespace Discord_NetCore
 {
@@ -140,6 +140,7 @@ namespace Discord_NetCore
         /// Posts a random meme to the chat if there is a new meme
         /// </summary>
         /// <param name="callback"></param>
+        /*
         private async void ImagePoster(object callback)
         {
             try
@@ -173,6 +174,7 @@ namespace Discord_NetCore
                 Console.WriteLine(e);
             }
         }
+        */
     }
 }
 
