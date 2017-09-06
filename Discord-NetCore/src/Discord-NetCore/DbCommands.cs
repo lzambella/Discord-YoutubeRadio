@@ -24,13 +24,14 @@ namespace Discord_NetCore
             {
                 Connection = new SqlConnection(connectionString);
                 Connection.Open();
-                Console.WriteLine("Connected to database.");
+                Console.WriteLine($"{DateTime.Now}: Connected to database.");
                 // Start the Point Incrementation Timer
-                timer = new Timer(PointIncrementer, null, 0, 60000);
+                timer = new Timer(PointIncrementer, null, 6000, 600000);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                Console.WriteLine("Error establishing a connection... Database commands disabled");
             }
         }
         public async Task<int> GetPoints(string discordId)
@@ -120,6 +121,28 @@ namespace Discord_NetCore
                 Console.WriteLine(e);
             }
         }
+
+        public async Task AddUser(IGuildUser user)
+        {
+            try
+            {
+                await FixConnection();
+                var command =
+                    new SqlCommand(
+                        "INSERT INTO DiscordUser(DiscordId, GachiPoints, RankLevel, PermissionLevel, DiscordGuild) VALUES (@id, @points, @rank, @permission, @guild)");
+                command.Parameters.Add(new SqlParameter("id", user.Id));
+                command.Parameters.Add(new SqlParameter("points", 0));
+                command.Parameters.Add(new SqlParameter("rank", 0));
+                command.Parameters.Add(new SqlParameter("permission", 0));
+                command.Parameters.Add(new SqlParameter("guild", user.GuildId));
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error adding user");
+                Console.WriteLine(e.StackTrace);
+            }
+        }
         /// <summary>
         /// Fix the shitty db connection if it breaks
         /// </summary>
@@ -161,9 +184,8 @@ namespace Discord_NetCore
                 }
                 if (minute >= 30)
                 {
-                    var usersAsync = Program.Client.GetGuild(215339016755740673).GetVoiceChannelAsync(215339863254368268).Result.GetUsersAsync();
+                    var users = Program.Client.GetGuild(215339016755740673).GetVoiceChannel(215339863254368268).Users;
                     Console.WriteLine($"{DateTime.Now}: It's Time! Adding points!");
-                    var users = await usersAsync.Flatten();
                     foreach (var user in users)
                     {
                         if (SkipIncrement(user))
@@ -171,7 +193,7 @@ namespace Discord_NetCore
 
                         var userId = ParseString(user.Mention);
                         var permission = await GetRank(userId);
-                        var points = (int)(Math.Pow(permission, 2)) / 50;
+                        var points = 1;
                         if (points < 1) points = 1;
                         command =
                             new SqlCommand("UPDATE DiscordUser SET GachiPoints = GachiPoints + @points WHERE DiscordId = @id",
@@ -206,8 +228,7 @@ namespace Discord_NetCore
         {
             try
             {
-                var usersAsync = Program.Client.GetGuild(215339016755740673).GetVoiceChannelAsync(215339863254368268).Result.GetUsersAsync();
-                var users = await usersAsync.Flatten();
+                var users = Program.Client.GetGuild(215339016755740673).GetVoiceChannel(215339863254368268).Users;
                 var userCount = users.Count(user => !user.IsBot);
                 //Console.WriteLine($"There are {userCount} users.");
                 return userCount > 2;

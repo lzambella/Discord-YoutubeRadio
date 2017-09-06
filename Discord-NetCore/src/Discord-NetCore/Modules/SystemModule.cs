@@ -13,11 +13,16 @@ namespace Discord_NetCore.Modules
         [Command("memory"), Summary("View avaliable memory")]
         public async Task GetInfo()
         {
-            var process = new Process();
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.FileName = "/usr/bin/free";
-            process.StartInfo.Arguments = "-h";
+            var process = new Process
+            {
+                StartInfo =
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    FileName = "/usr/bin/free",
+                    Arguments = "-h"
+                }
+            };
             process.Start();
             var stdout = await process.StandardOutput.ReadToEndAsync();
             string output = $"```{stdout}```";
@@ -34,33 +39,9 @@ namespace Discord_NetCore.Modules
         [Command("sysinfo"), Summary("Print system information")]
         public async Task hw()
         {
-            var process = new Process();
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.FileName = "/usr/bin/lshw";
-            process.StartInfo.Arguments = "-short";
-            process.Start();
-            var stdout = await process.StandardOutput.ReadToEndAsync();
-            string output = $"```{stdout}```";
-            await ReplyAsync(output);
+            await Program.Client.SetStatusAsync(UserStatus.Invisible);
         }
 
-        [Command("tail"), Summary("Print last 20 lines of the log file (admin only)")]
-        public async Task tail()
-        {
-            if (Context.User.Id == Program.OwnerId)
-            {
-                var process = new Process();
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.FileName = "/usr/bin/tail";
-                process.StartInfo.Arguments = "-n 20 /home/ubuntu/nohup.out";
-                process.Start();
-                var stdout = await process.StandardOutput.ReadToEndAsync();
-                string output = $"```{stdout}```";
-                await ReplyAsync(output);
-            }
-        }
         [Command("help"), Summary("Prints help message")]
         public async Task Help([Summary("(Optional) Command Name")]string c = null)
         {
@@ -78,11 +59,14 @@ namespace Discord_NetCore.Modules
                 var commandName = command.Name;
                 var commandSummary = command.Summary;
                 var commandParameters = command.Parameters;
+                var commandAlias = string.Join(",", command.Aliases);
                 var paramString = "";
                 foreach (var parameter in commandParameters)
                     paramString += $"<{parameter.Summary}> ";
-                await ReplyAsync($"Name: `{commandName}`\nDescription: `{commandSummary}`\n" +
-                                                   $"Usage: `!{commandName} {paramString}`");
+                await ReplyAsync($"Name: `{commandName}`\n" +
+                                 $"Description: `{commandSummary}`\n" +
+                                 $"Usage: `!{commandName} {paramString}`\n" +
+                                 $"Aliases: `{commandAlias}`");
             }
             else
             {
@@ -90,12 +74,13 @@ namespace Discord_NetCore.Modules
                 {
                     str += $"{module.Name}: ";
                     foreach (var command in module.Commands)
-                        str += $"`{command.Name}` ";
+                        str += $"{command.Name} ";
                     str += '\n';
                 }
-                await ReplyAsync("These are the commands you can use:\n" +
-                                                  $"{str}\n" +
-                                                   "Type `!help <command>` for more info.");
+                await ReplyAsync("```\n" +
+                                 "Commands\n" +
+                                 $"{str}\n" +
+                                 "Type !help <command> for more info.```");
 
             }
         }

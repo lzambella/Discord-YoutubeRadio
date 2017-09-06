@@ -1,107 +1,251 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Audio;
 using Discord.Commands;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
-using Discord.WebSocket;
-namespace Discord_NetCore.Modules 
+using Discord_NetCore.Modules.Audio;
+using System.IO;
+using System.Linq;
+
+namespace Discord_NetCore.Modules
 {
     [Name("Audio")]
-    public class Audio : ModuleBase
+    public class AudioModule : ModuleBase
     {
-        private IAudioClient client { get; set; }
+
         // Create a Join command, that will join the parameter or the user's current voice channel
-        [Command("joinchannel")]
+        [Command("joinchannel", RunMode = RunMode.Async), Alias("join", "j", "voice"), Summary("Joins the voice channel the user is in")]
         public async Task JoinChannel()
+        {
+            var channel = (Context.User as IGuildUser)?.VoiceChannel;
+            var guildId = Context.Guild.Id;
+            if (channel == null) { await ReplyAsync("You must be in a voice channel for me to join"); return; }
+
+            if (!Program.MusicPlayers.ContainsKey(guildId))
+            {
+                Program.MusicPlayers.Add(guildId, new MusicPlayer(Context));
+                await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
+                await ReplyAsync($"Joining {Context.User.Mention}'s voice channel: {channel.Name}");
+            }
+            else
+            {
+                await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
+                await ReplyAsync($"Moving to {Context.User.Mention}'s voice channel: {channel.Name}");
+            }
+        }
+        /*
+        [Command("annoy"), Summary("Play a random sound effect"), Alias("sfx", "g")]
+        public async Task Gachimuchi()
         {
             try
             {
-                // Get the audio channel
-                var user = (IGuildUser) Context.User;
-                var channel = user.VoiceChannel;
-                if (channel == null) { await ReplyAsync("User must be in a voice channel"); return; }
-                client = await channel.ConnectAsync().ConfigureAwait(false);
-                await ReplyAsync($"Joining {Context.User.Mention} voice channel {channel.Name}");
+                var audioPlayer = GetMusicPlayerForGuild();
+                if (audioPlayer == null)
+                    await ReplyAsync("I am not in a voice channel");
+                else
+                {
+                    var files = Directory.GetFiles("Data/sfx/");
+                    var rand = DateTime.Now.ToFileTimeUtc() % files.Length;
+                    Console.WriteLine($"Selected {files[rand]}");
+                    await audioPlayer.PlaySong(files[(int)rand]);
+                }
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
-            }
-        }
 
-        [Command("meme")]
-        public async Task AudioTest()
+                Console.WriteLine(e);
+            }
+        */
+        [Command("custom"), Summary("plays a direct song.")]
+        public async Task PlayCustomSong(string path)
         {
             try
             {
-                var channel = (Context.User as IGuildUser).VoiceChannel;
-                await PlaySong($"{Program.argv["DataLocation"]}\\sound\\gachi\\beep1.mp3", 0.5f, channel);
+                var audioPlayer = GetMusicPlayerForGuild();
+                if (audioPlayer == null)
+                    await ReplyAsync("I am not in a channel!");
+                else
+                {
+                    Console.WriteLine("Trying to play a song");
+                    await ReplyAsync("Playing a custom song...");
+                    await audioPlayer.AddFileToQueue(path, Context, true);
+                    if (audioPlayer.AutoPlay && audioPlayer.AudioFree)
+                    {
+                        await RunQueue();
+                    }
+                }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
         }
-        private async Task PlaySong(string song, float volume, IVoiceChannel chan)
+        [Command("skip", RunMode = RunMode.Async), Summary("Skip the currently running song")]
+        public async Task SkipSongAsync()
         {
-            var audioClient = await chan.ConnectAsync();
-            const int blockSize = 3840;
-            var buffer = new byte[blockSize];
-            using (var channel = await chan.ConnectAsync())
-            using (var stream = channel.CreatePCMStream(2880, bitrate: chan.Bitrate))
+            await ReplyAsync("Skipping song!");
+            var audioPlayer = GetMusicPlayerForGuild();
+            await audioPlayer.SkipSong(Context);
+        }
+        [Command("youtube", RunMode = RunMode.Async), Summary("Stream a youtube video"), Alias("y", "stream")]
+        public async Task Youtube(string url)
+        {
+            var audioPlayer = GetMusicPlayerForGuild();
+            var voiceChannel = (Context.User as IGuildUser)?.VoiceChannel;
+            if (voiceChannel == null || audioPlayer == null)
+                await ReplyAsync("You are not currently in a voice channel.");
+            else if (audioPlayer.ConnectedChannel == null)
+                await ReplyAsync("I am currently not in a voice channel.");
+            else
             {
-                var process = Process.Start(new ProcessStartInfo
+                await audioPlayer.AddToQueue(url, Context);
+                await Context.Message.DeleteAsync();
+                await ReplyAsync("Added the song to the queue.");
+            }
+            if (audioPlayer.AutoPlay && audioPlayer.AudioFree)
+            {
+                await RunQueue();
+            }
+        }
+        [Command("shuffle"), Summary("Shuffle the current queue")]
+        public async Task Shuffle()
+        {
+            var audioPlayer = GetMusicPlayerForGuild();
+            audioPlayer.TruffleShuffle();
+            await ReplyAsync("Shuffled the queue!");
+        }
+        [Command("playqueue", RunMode = RunMode.Async), Summary("Plays the queue"), Alias("run", "start")]
+        public async Task RunQueue()
+        {
+            try
+            {
+                var audioPlayer = GetMusicPlayerForGuild();
+                audioPlayer.RunQueue();
+            }
+            catch (AudioStreamInUseException)
+            {
+                await ReplyAsync("Something is already playing!");
+            }
+        }
+        [Command("pause", RunMode = RunMode.Async), Summary("Pause the audio stream"), Alias("p")]
+        public async Task PauseStream()
+        {
+            try
+            {
+                var audioPlayer = GetMusicPlayerForGuild();
+                if (audioPlayer.Paused)
+                    await ReplyAsync("It's already paused!");
+                else
                 {
-                    FileName = "ffmpeg",
-                    Arguments =
-                    $"-i \"{song}\" " +
-                    "-f s16le -ar 48000 -ac 2 pipe:1",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = false
-                });
-                await process.StandardOutput.BaseStream.CopyToAsync(stream);
-                process.WaitForExit();
+                    audioPlayer.TogglePause();
+                    await ReplyAsync("Stream paused!");
+                }
             }
-            /*
-            var voiceStream = audioClient.CreatePCMStream(blockSize);
-            while (true)
+            catch (Exception e)
             {
-                var byteCount = await process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
-                if (byteCount == 0)
-                    break;
-                buffer = AdjustVolume(buffer, volume);
-                await voiceStream.WriteAsync(buffer, 0, blockSize);
+                Console.WriteLine(e);
             }
-            */
-
+        }
+        [Command("resume", RunMode = RunMode.Async), Summary("Resume a paused song"), Alias("r")]
+        public async Task Resume()
+        {
+            var audioPlayer = GetMusicPlayerForGuild();
+            if (!audioPlayer.Paused)
+                await ReplyAsync("It's already playing or its set to play!");
+            else
+            {
+                audioPlayer.TogglePause();
+                await ReplyAsync("Stream resumed!");
+            }
+        }
+        [Command("queue", RunMode = RunMode.Async), Summary("Prints the current queue"), Alias("q", "check")]
+        public async Task CheckQueue()
+        {
+            var audioPlayer = GetMusicPlayerForGuild();
+            if (audioPlayer.GetQueue().Length == 0) await ReplyAsync("Nothing in queue!");
+            else await ReplyAsync($"```{audioPlayer.GetQueue()}```");
         }
 
-        public static unsafe byte[] AdjustVolume(byte[] audioSamples, float volume)
+        //[Command("autoplay"), Summary("Toggle autoplay"), Alias("a")]
+        public async Task AutoPlay()
         {
-            Contract.Requires(audioSamples != null);
-            Contract.Requires(audioSamples.Length % 2 == 0);
-            Contract.Requires(volume >= 0f && volume <= 1f);
-            Contract.Assert(BitConverter.IsLittleEndian);
+            var audioPlayer = GetMusicPlayerForGuild();
+            audioPlayer.AutoPlay = !audioPlayer.AutoPlay;
+            if (!audioPlayer.AutoPlay)
+                await ReplyAsync("Autoplay Disabled!");
+            else await ReplyAsync("Autoplay enabled!");
 
-            if (Math.Abs(volume - 1f) < 0.0001f) return audioSamples;
-
-            // 16-bit precision for the multiplication
-            int volumeFixed = (int)Math.Round(volume * 65536d);
-
-            int count = audioSamples.Length / 2;
-
-            fixed (byte* srcBytes = audioSamples)
+        }
+        [Command("stop", RunMode = RunMode.Async), Summary("Stops the current song.")]
+        public async Task StopAudio()
+        {
+            if (Context.User.Id != Program.OwnerId)
             {
-                short* src = (short*)srcBytes;
-
-                for (int i = count; i != 0; i--, src++)
-                    *src = (short)(((*src) * volumeFixed) >> 16);
+                await ReplyAsync("You can't stop the audio");
+                return;
             }
 
-            return audioSamples;
+            var audioPlayer = GetMusicPlayerForGuild();
+            if (audioPlayer == null) return;
+            await ReplyAsync("Stopping the queue...");
+            audioPlayer.StopAudio();
+        }
+
+        [Command("volume", RunMode = RunMode.Async), Summary("Change the colume"), Alias("v", "vol")]
+        public async Task ChangeVolume([Summary("Volume 0-100")] int vol)
+        {
+            if (vol > 100) vol = 100;
+            if (vol < 0) vol = 0;
+            float volume = vol / 100f;
+            var audioPlayer = GetMusicPlayerForGuild();
+            audioPlayer.Volume = volume;
+            await ReplyAsync($"Setting the volume to {vol}!");
+        }
+        [Command("skip")]
+        public async Task SkipSong()
+        {
+            var audioPlayer = GetMusicPlayerForGuild();
+            await audioPlayer.SkipSong(Context);
+        }
+        //[Command("repeat", RunMode = RunMode.Async)]
+        public async Task Repeater()
+        {
+            var audioPlayer = GetMusicPlayerForGuild();
+            await audioPlayer.RepeatAudio();
+            await ReplyAsync("I'm listening");
+        }
+        [Command("upload", RunMode = RunMode.Async)]
+        public async Task UploadSong()
+        {
+            try
+            {
+
+                var musicPlayer = GetMusicPlayerForGuild();
+                if (Context.Message.Attachments.Any())
+                {
+                    var url = Context.Message.Attachments.First().Url;
+                    await musicPlayer.AddFileToQueue(url, Context, false);
+                    await ReplyAsync("Revieced a custom song");
+                    if (musicPlayer.AudioFree == true)
+                        musicPlayer.RunQueue();
+                }
+                else
+                {
+                    await ReplyAsync("You didn't upload anything");
+                }
+            }
+            catch (NullReferenceException)
+            {
+                await ReplyAsync("I am not in a voice channel!");
+            }
+        }
+
+        private MusicPlayer GetMusicPlayerForGuild()
+        {
+            var guildId = Context.Guild.Id;
+            if (Program.MusicPlayers.ContainsKey(guildId))
+                return Program.MusicPlayers[guildId];
+            return null;
         }
     }
 }

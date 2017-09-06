@@ -9,7 +9,7 @@ using NetCoreBot;
 
 namespace Discord_NetCore.Modules
 {
-    [Name("RPG")]
+    //[Name("RPG")]
     public class RpgModule : ModuleBase
     {
         [Command("register"), Summary("Register a new character")]
@@ -168,6 +168,7 @@ namespace Discord_NetCore.Modules
             }
         }
 
+        /*
         [Command("inventory"), Summary("Check your inventory")]
         public async Task Inventory(IUserMessage msg)
         {
@@ -222,6 +223,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e);
             }
         }
+        */
         [Command("check"), Summary("Check what's around you")]
         public async Task Check(IUserMessage msg)
         {
