@@ -44,7 +44,7 @@ namespace Discord_NetCore.Modules.Audio
             {
                 Parameters = url.Split('\\');
                 Title = Parameters[Parameters.Count() - 1];
-                Url = url;
+                DirectLink = url;
             }
 
             RequestedBy = requestedBy;
@@ -98,7 +98,8 @@ namespace Discord_NetCore.Modules.Audio
                 process = Process.Start(new ProcessStartInfo
                 {
                     FileName = "./Binaries/youtube-dl.exe",
-                    Arguments = $"-x -g \"{Url}\" ",
+                    //Arguments = $"-x -g \"{Url}\" ",
+                    Arguments = $" -f bestaudio -g \"{Url}\" ",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = false

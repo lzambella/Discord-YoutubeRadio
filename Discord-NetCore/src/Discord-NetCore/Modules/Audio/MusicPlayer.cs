@@ -110,7 +110,7 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         public async Task PlaySong(string song, CancellationToken cancelToken)
         {
-            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music))
+            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed))
             {
                 _process = Process.Start(new ProcessStartInfo
                 {
@@ -375,29 +375,19 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         private async Task StreamYoutube(string url, CancellationToken cancelToken)
         {
-            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Music))
+            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed))
             {
                 try
                 {
 
                     if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
                     {
-                        /*
-                        _process = Process.Start(new ProcessStartInfo
-                        {
-                            FileName = "cmd",
-                            Arguments = $"/C Binaries\\youtube-dl.exe --hls-prefer-native -q -o - {url} | Binaries\\ffmpeg.exe -i - -f s16le -ar 48000 -ac 2 -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 10  -loglevel quiet pipe:1 ",
-                            UseShellExecute = false,
-                            RedirectStandardOutput = true,
-                            RedirectStandardError = false,
-                        });
-                        */
                         _process = Process.Start(new ProcessStartInfo
                         {
                             FileName = "Binaries\\ffmpeg",
                             Arguments =
                              $"-i \"{url}\" " +
-                            "-f s16le -ar 48000 -ac 2 pipe:1 -loglevel quiet",
+                            " -ac 2 -f s16le -ar 48000 pipe:1",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = false
@@ -414,7 +404,8 @@ namespace Discord_NetCore.Modules.Audio
                         });
                     }
                     Console.WriteLine("Starting process...");
-                    int blockSize = 4096;
+                    /*
+                    int blockSize = 512;
                     var buffer = new byte[blockSize];
                     int byteCount = 1;
                     do
@@ -431,12 +422,13 @@ namespace Discord_NetCore.Modules.Audio
                     _process.WaitForExit();
                     await stream.FlushAsync();
                     WillSkip = false;
-
+                    */
+                    await _process.StandardOutput.BaseStream.CopyToAsync(stream);
+                    await stream.FlushAsync();
                 }
                 catch (OperationCanceledException)
                 {
                     Console.WriteLine("Stream writing cancelled.");
-                    _process.WaitForExit();
                     await stream.FlushAsync();
                     WillSkip = false;
                 }

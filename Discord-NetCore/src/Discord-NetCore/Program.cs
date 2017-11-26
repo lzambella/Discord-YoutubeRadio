@@ -65,7 +65,7 @@ namespace Discord_NetCore
         {
             var discordToken = Environment.GetEnvironmentVariable("discordToken");
             var databaseString = Environment.GetEnvironmentVariable("databaseString");
-            FacebookToken = Environment.GetEnvironmentVariable("FacebookToken");
+            FacebookToken = Environment.GetEnvironmentVariable("facebookToken");
             Console.WriteLine("Successfully read the settings");
 
             Console.WriteLine("Logging into server");
