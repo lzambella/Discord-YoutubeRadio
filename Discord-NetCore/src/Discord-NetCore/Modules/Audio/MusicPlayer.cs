@@ -72,6 +72,9 @@ namespace Discord_NetCore.Modules.Audio
         /// Stream process
         /// </summary>
         private Process _process { get; set; }
+
+        private ProcessStartInfo _processInfo { get; set; }
+
         /// <summary>
         /// Set up a new music player
         /// </summary>
@@ -102,55 +105,7 @@ namespace Discord_NetCore.Modules.Audio
             }
         }
 
-        /// <summary>
-        /// Plays a song from a file
-        /// </summary>
-        /// <param name="song">Song file</param>
-        /// <param name="volume">Volume to play at</param>
-        /// <returns></returns>
-        public async Task PlaySong(string song, CancellationToken cancelToken)
-        {
-            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed))
-            {
-                _process = Process.Start(new ProcessStartInfo
-                {
-                    FileName = "Binaries\\ffmpeg",
-                    Arguments =
-                    $"-i \"{song}\" " +
-                    "-f s16le -ar 48000 -ac 2 pipe:1 -loglevel quiet",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = false
-                });
-                try
-                {
-                    int blockSize = 1024;
-                    var buffer = new byte[blockSize];
-                    int byteCount = 1;
-                    do
-                    {
-                        // Don't send any data or read from the stream if the stream is supposed to be paused
-                        if (Paused) continue;
 
-                        if (cancelToken.IsCancellationRequested || byteCount == 0 || WillSkip)
-                            break;
-
-                        byteCount = await _process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
-                        buffer = AdjustVolume(buffer, Volume);
-                        await stream.WriteAsync(buffer, 0, blockSize);
-                    } while (byteCount > 0);
-                    _process.WaitForExit();
-                    await stream.FlushAsync();
-                    WillSkip = false;
-
-                }
-                catch (OperationCanceledException)
-                {
-                    Console.WriteLine("Stream writing cancelled.");
-                    WillSkip = false;
-                }
-            }
-        }
         /// <summary>
         /// Shuffle the queue
         /// </summary>
@@ -387,7 +342,7 @@ namespace Discord_NetCore.Modules.Audio
                             FileName = "Binaries\\ffmpeg",
                             Arguments =
                              $"-i \"{url}\" " +
-                            " -ac 2 -f s16le -ar 48000 pipe:1",
+                            " -ac 2 -f s16le -ar 48000 -loglevel quiet pipe:1",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = false
@@ -404,7 +359,6 @@ namespace Discord_NetCore.Modules.Audio
                         });
                     }
                     Console.WriteLine("Starting process...");
-                    /*
                     int blockSize = 512;
                     var buffer = new byte[blockSize];
                     int byteCount = 1;
@@ -422,8 +376,6 @@ namespace Discord_NetCore.Modules.Audio
                     _process.WaitForExit();
                     await stream.FlushAsync();
                     WillSkip = false;
-                    */
-                    await _process.StandardOutput.BaseStream.CopyToAsync(stream);
                     await stream.FlushAsync();
                 }
                 catch (OperationCanceledException)
@@ -435,6 +387,56 @@ namespace Discord_NetCore.Modules.Audio
                 catch (FileNotFoundException)
                 {
                     await _context.Channel.SendMessageAsync("Error, Youtube-dl and/or ffmpeg can not be found");
+                }
+            }
+        }
+        /// <summary>
+        /// Plays a song from a file
+        /// </summary>
+        /// <param name="song">Song file</param>
+        /// <param name="volume">Volume to play at</param>
+        /// <returns></returns>
+        public async Task PlaySong(string song, CancellationToken cancelToken)
+        {
+            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed))
+            {
+                _process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "Binaries\\ffmpeg",
+                    Arguments =
+                    $"-i \"{song}\" " +
+                    "-f s16le -ar 48000 -ac 2 pipe:1 -loglevel quiet",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = false
+                });
+                try
+                {
+                    Console.WriteLine("Playing a file...");
+                    int blockSize = 512;
+                    var buffer = new byte[blockSize];
+                    int byteCount = 1;
+                    do
+                    {
+                        // Don't send any data or read from the stream if the stream is supposed to be paused
+                        if (Paused) continue;
+
+                        if (cancelToken.IsCancellationRequested || byteCount == 0 || WillSkip)
+                            break;
+
+                        byteCount = await _process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
+                        buffer = AdjustVolume(buffer, Volume);
+                        await stream.WriteAsync(buffer, 0, blockSize);
+                    } while (byteCount > 0);
+                    _process.WaitForExit();
+                    await stream.FlushAsync();
+                    WillSkip = false;
+
+                }
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine("Stream writing cancelled.");
+                    WillSkip = false;
                 }
             }
         }
