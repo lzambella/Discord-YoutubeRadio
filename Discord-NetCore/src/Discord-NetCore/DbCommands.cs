@@ -58,7 +58,40 @@ namespace Discord_NetCore
             }
         }
 
+        /// <summary>
+        /// Gets points from a user in a certain server
+        /// </summary>
+        /// <param name="discordId"></param>
+        /// <param name="serverId"></param>
+        /// <returns></returns>
+        public async Task<int> GetPoints(string discordId, string serverId)
+        {
+            try
+            {
+                await FixConnection();
+                var points = 0;
+                var command = new SqlCommand("SELECT GachiPoints from @serverId WHERE DiscordId = @id", Connection);
+                command.Parameters.Add(new SqlParameter("id", discordId));
+                command.Parameters.Add(new SqlParameter("serverId", serverId));
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (reader.Read())
+                    {
+                        points = int.Parse(reader[0].ToString());
+                    }
+                }
+                return points;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return 0;
+            }
+        }
+
         /// <param name="discordId">ID num only</param>
+        /// Obsolete
         public async Task<int> GetRank(string discordId)
         {
             try
@@ -68,6 +101,36 @@ namespace Discord_NetCore
                 var command = new SqlCommand("SELECT RankLevel FROM DiscordUser WHERE DiscordId = @id",
                     Connection);
                 command.Parameters.Add(new SqlParameter("id", discordId));
+                using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (reader.Read())
+                        permission = int.Parse(reader[0].ToString());
+                }
+                return permission;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return 0;
+            }
+        }
+
+       /// <summary>
+       /// Gets rank of someone from a server
+       /// </summary>
+       /// <param name="discordId"></param>
+       /// <param name="serverId"></param>
+       /// <returns></returns>
+        public async Task<int> GetRank(string discordId, string serverId)
+        {
+            try
+            {
+                await FixConnection();
+                var permission = 0;
+                var command = new SqlCommand("SELECT RankLevel FROM @serverId WHERE DiscordId = @id",
+                    Connection);
+                command.Parameters.Add(new SqlParameter("id", discordId));
+                command.Parameters.Add(new SqlParameter("serverId", serverId));
                 using (SqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (reader.Read())
@@ -104,6 +167,35 @@ namespace Discord_NetCore
                 return 0;
             }
         }
+        /// <summary>
+        /// Get the bot permission from a user from a server
+        /// </summary>
+        /// <param name="discordId"></param>
+        /// <param name="serverId"></param>
+        /// <returns></returns>
+        public async Task<int> GetPermission(string discordId, string serverId)
+        {
+            try
+            {
+                await FixConnection();
+                var permission = 0;
+                var command = new SqlCommand("SELECT PermissionLevel FROM @serverId WHERE DiscordId = @id",
+                    Connection);
+                command.Parameters.Add(new SqlParameter("id", discordId));
+                command.Parameters.Add(new SqlParameter("serverId", serverId));
+                using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (reader.Read())
+                        permission = int.Parse(reader[0].ToString());
+                }
+                return permission;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return 0;
+            }
+        }
 
         public async Task ChangePoints(string discordId, int value)
         {
@@ -114,6 +206,31 @@ namespace Discord_NetCore
                     new SqlCommand("UPDATE DiscordUser SET GachiPoints = GachiPoints + @value WHERE DiscordId = @id", Connection);
                 command.Parameters.Add(new SqlParameter("value", value));
                 command.Parameters.Add(new SqlParameter("id", discordId));
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        /// <summary>
+        /// Directly change points from a user from a server
+        /// </summary>
+        /// <param name="discordId"></param>
+        /// <param name="serverId"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public async Task ChangePoints(string discordId, string serverId, int value)
+        {
+            try
+            {
+                await FixConnection();
+                var command =
+                    new SqlCommand("UPDATE @serverId SET GachiPoints = GachiPoints + @value WHERE DiscordId = @id", Connection);
+                command.Parameters.Add(new SqlParameter("value", value));
+                command.Parameters.Add(new SqlParameter("id", discordId));
+                command.Parameters.Add(new SqlParameter("serverId", serverId));
                 await command.ExecuteNonQueryAsync();
             }
             catch (Exception e)
@@ -144,6 +261,34 @@ namespace Discord_NetCore
             }
         }
         /// <summary>
+        /// Add a user to a server's database
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public async Task AddUser(IGuildUser user, string serverId)
+        {
+            try
+            {
+                await FixConnection();
+                var command =
+                    new SqlCommand(
+                        "INSERT INTO @serverId(DiscordId, GachiPoints, RankLevel, PermissionLevel, DiscordGuild) VALUES (@id, @points, @rank, @permission, @guild)");
+                command.Parameters.Add(new SqlParameter("serverId", serverId));
+                command.Parameters.Add(new SqlParameter("id", user.Id));
+                command.Parameters.Add(new SqlParameter("points", 0));
+                command.Parameters.Add(new SqlParameter("rank", 0));
+                command.Parameters.Add(new SqlParameter("permission", 0));
+                command.Parameters.Add(new SqlParameter("guild", user.GuildId));
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error adding user");
+                Console.WriteLine(e.StackTrace);
+            }
+        }
+
+        /// <summary>
         /// Fix the shitty db connection if it breaks
         /// </summary>
         /// <returns></returns>
@@ -157,7 +302,8 @@ namespace Discord_NetCore
         }
 
 
-
+        // TODO: update the points for all people in all servers
+        // Perhaps create flags for each server that trigger how users get points
         private async void PointIncrementer(Object StateInfo)
         {
             try
@@ -309,6 +455,26 @@ namespace Discord_NetCore
                 Console.WriteLine(e);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Creates a new table for a new discord server
+        /// The schema should contain the user's ID, Points, bot permission level, and possibly other statistics.
+        /// </summary>
+        /// <returns></returns>
+        public async Task CreateTableForServer(string discordID)
+        {
+            // TODO:
+        }
+
+        /// <summary>
+        /// Checks if the table for a certain server has already been created
+        /// </summary>
+        /// <returns>True if exists</returns>
+        public async Task<Boolean> TableExists(string discordID)
+        {
+            //TODO:
+            return false;
         }
 
     }
