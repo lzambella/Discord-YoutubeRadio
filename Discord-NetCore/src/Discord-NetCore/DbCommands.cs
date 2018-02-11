@@ -389,7 +389,7 @@ namespace Discord_NetCore
 
         private static bool SkipIncrement(IGuildUser user)
         {
-            return user.IsBot || user.IsSelfDeafened || user.IsSelfMuted || user.IsMuted || user.IsDeafened;
+            return user.IsBot || user.IsSelfDeafened || user.IsDeafened;
         }
         /// <summary>
         /// Get the XY Coordinates of a player
@@ -462,9 +462,28 @@ namespace Discord_NetCore
         /// The schema should contain the user's ID, Points, bot permission level, and possibly other statistics.
         /// </summary>
         /// <returns></returns>
-        public async Task CreateTableForServer(string discordID)
+        public async Task CreateTableForServer(string serverId)
         {
+
             // TODO:
+            try
+            {
+                var sql = $"CREATE TABLE @serverId (" +
+                  $"UserId varchar(255)," +
+                  $"Points int," +
+                  $"PermLevel int," +
+                  $"Rank int," +
+                  $"MessageCount int );";
+                var command = new SqlCommand(sql, Connection);
+                command.Parameters.Add(new SqlParameter("serverId", serverId));
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error.");
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         /// <summary>
@@ -477,5 +496,41 @@ namespace Discord_NetCore
             return false;
         }
 
+        /// <summary>
+        /// Creates the master list of servers that the bot is connected to
+        /// Used to determine which servers the bot will add points to.
+        /// </summary>
+        /// <returns></returns>
+        public async Task CreateMasterList()
+        {
+            //TODO:
+        }
+
+        /// <summary>
+        /// Add a server by id to the master list
+        /// </summary>
+        /// <param name="serverId"></param>
+        /// <returns></returns>
+        public async Task AddToMasterList(string serverId)
+        {
+            //TODO:
+        }
+
+        /// <summary>
+        /// Creates a new server entry by firsting adding the id to the master list and then creating a new table for that server
+        /// </summary>
+        /// <param name="serverId"></param>
+        /// <returns>True if the server was successfully created</returns>
+        public async Task<Boolean> AddServer(string serverId)
+        {
+            //TODO:
+            try
+            {
+                return true;
+            } catch (Exception e)
+            {
+                return false;
+            }
+        }
     }
 }

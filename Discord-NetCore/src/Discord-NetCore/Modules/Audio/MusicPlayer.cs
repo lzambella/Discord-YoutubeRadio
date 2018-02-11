@@ -174,8 +174,8 @@ namespace Discord_NetCore.Modules.Audio
             {
                 if (AudioFree)
                     return;
+
                 AudioCancelSource.Cancel();
-                AudioCancelSource.Dispose();
 
                 if (!AudioFree)
                     AudioFree = true;
@@ -211,6 +211,7 @@ namespace Discord_NetCore.Modules.Audio
             StreamThread = new Thread(new ThreadStart(async () =>
                 await RunQueueThread()));
             StreamThread.Start();
+           
         }
         private async Task RunQueueThread()
         {
@@ -227,14 +228,10 @@ namespace Discord_NetCore.Modules.Audio
                     await PlaySong(CurrentSong.DirectLink, CancelToken);
                 else
                     await StreamYoutube(CurrentSong.DirectLink, CancelToken);
-                Console.WriteLine("Running audio...");
-                // /\ /\ WARNING /\ /\ hack detected ahead!!
-                while (!_process.HasExited) // wait for process to stop
-                    Thread.Sleep(100);
+                Console.WriteLine("Playing the next song...");
             }
             AudioFree = true;
-            _process.Dispose();
-            Console.WriteLine($"{DateTime.Now}: Process finished.");
+            Console.WriteLine($"{DateTime.Now}: Queue finished.");
             
         }
         /// <summary>
@@ -263,10 +260,11 @@ namespace Discord_NetCore.Modules.Audio
         }
         /// <summary>
         /// Skip to the next song in the queue
+        /// Will default to votes unless the person who requested the current song is skipping
         /// </summary>
         public async Task SkipSong(ICommandContext context)
         {
-            var song = _songQueue.First();
+            var song = CurrentSong;
             if (context.User.Id == song.RequestedBy.User.Id)
 
             {
@@ -367,20 +365,21 @@ namespace Discord_NetCore.Modules.Audio
                         // Don't send any data or read from the stream if the stream is supposed to be paused
                         if (Paused) continue;
 
-                        if (cancelToken.IsCancellationRequested || byteCount == 0 || WillSkip)
+                        if (byteCount == 0 || WillSkip)
                             break;
                         byteCount = await _process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
                         buffer = AdjustVolume(buffer, Volume);
                         await stream.WriteAsync(buffer, 0, blockSize);
                     } while (byteCount > 0);
                     _process.WaitForExit();
+                    _process.Close();
                     await stream.FlushAsync();
                     WillSkip = false;
-                    await stream.FlushAsync();
                 }
                 catch (OperationCanceledException)
                 {
-                    Console.WriteLine("Stream writing cancelled.");
+                    Console.WriteLine("Cancelled by user.");
+                    _process.Close();
                     await stream.FlushAsync();
                     WillSkip = false;
                 }
@@ -428,7 +427,6 @@ namespace Discord_NetCore.Modules.Audio
                         buffer = AdjustVolume(buffer, Volume);
                         await stream.WriteAsync(buffer, 0, blockSize);
                     } while (byteCount > 0);
-                    _process.WaitForExit();
                     await stream.FlushAsync();
                     WillSkip = false;
 
@@ -440,6 +438,12 @@ namespace Discord_NetCore.Modules.Audio
                 }
             }
         }
+
+        private void _process_Exited(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task audioTest()
         {
             using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed))

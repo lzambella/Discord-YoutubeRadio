@@ -225,7 +225,7 @@ namespace Discord_NetCore.Modules
                 {
                     var url = Context.Message.Attachments.First().Url;
                     await musicPlayer.AddFileToQueue(url, Context, false);
-                    await ReplyAsync("Revieced a custom song");
+                    await ReplyAsync("Recieved a custom song");
                     if (musicPlayer.AudioFree == true)
                         musicPlayer.RunQueue();
                 }
