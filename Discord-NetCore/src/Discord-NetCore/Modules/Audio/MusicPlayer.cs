@@ -349,11 +349,13 @@ namespace Discord_NetCore.Modules.Audio
                     {
                         _process = Process.Start(new ProcessStartInfo
                         {
-                            FileName = "bash",
-                            Arguments = $"-c \" youtube-dl -q -o - {url} | ffmpeg -i - -f s16le -ar 48000 -ac 2 -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 2 -loglevel quiet pipe:1 \" ",
+                            FileName = "ffmpeg",
+                            Arguments =
+                             $"-i \"{url}\" " +
+                            " -ac 2 -f s16le -ar 48000 -loglevel quiet pipe:1",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
-                            RedirectStandardError = false,
+                            RedirectStandardError = false
                         });
                     }
                     Console.WriteLine("Starting process...");

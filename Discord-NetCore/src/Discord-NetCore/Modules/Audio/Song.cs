@@ -95,15 +95,31 @@ namespace Discord_NetCore.Modules.Audio
                 Length = duration;
 
                 // hacky way to get the direct link
-                process = Process.Start(new ProcessStartInfo
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
                 {
-                    FileName = "./Binaries/youtube-dl.exe",
-                    //Arguments = $"-x -g \"{Url}\" ",
-                    Arguments = $" -f bestaudio -g \"{Url}\" ",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = false
-                });
+
+                    process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "./Binaries/youtube-dl.exe",
+                        //Arguments = $"-x -g \"{Url}\" ",
+                        Arguments = $" -f bestaudio -g \"{Url}\" ",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = false
+                    });
+                }
+                else
+                {
+                    process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "youtube-dl",
+                        //Arguments = $"-x -g \"{Url}\" ",
+                        Arguments = $" -f bestaudio -g \"{Url}\" ",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = false
+                    });
+                }
                 streamReader = new StreamReader(process.StandardOutput.BaseStream);
                 DirectLink = await streamReader.ReadLineAsync();
                 Console.WriteLine(DirectLink);
