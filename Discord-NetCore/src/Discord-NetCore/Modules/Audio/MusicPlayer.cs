@@ -328,6 +328,7 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         private async Task StreamYoutube(string url, CancellationToken cancelToken)
         {
+            Console.WriteLine("Youtube requested");
             using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed))
             {
                 try
@@ -335,6 +336,7 @@ namespace Discord_NetCore.Modules.Audio
 
                     if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
                     {
+                        //Console.WriteLine("Windows Detected");
                         _process = Process.Start(new ProcessStartInfo
                         {
                             FileName = "Binaries\\ffmpeg",
@@ -347,12 +349,13 @@ namespace Discord_NetCore.Modules.Audio
                         });
                     } else
                     {
+                        //Console.WriteLine("Linux Detected");
                         _process = Process.Start(new ProcessStartInfo
                         {
-                            FileName = "ffmpeg",
+                            FileName = "/bin/bash",
                             Arguments =
-                             $"-i \"{url}\" " +
-                            " -ac 2 -f s16le -ar 48000 -loglevel quiet pipe:1",
+                             $"-c \"ffmpeg -i \'{url}\' " +
+                            " -ac 2 -f s16le -ar 48000 -loglevel panic pipe:1 \" ",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = false
@@ -377,6 +380,7 @@ namespace Discord_NetCore.Modules.Audio
                     _process.Close();
                     await stream.FlushAsync();
                     WillSkip = false;
+                    Console.WriteLine("Process finished.");
                 }
                 catch (OperationCanceledException)
                 {
@@ -388,6 +392,10 @@ namespace Discord_NetCore.Modules.Audio
                 catch (FileNotFoundException)
                 {
                     await _context.Channel.SendMessageAsync("Error, Youtube-dl and/or ffmpeg can not be found");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
                 }
             }
         }

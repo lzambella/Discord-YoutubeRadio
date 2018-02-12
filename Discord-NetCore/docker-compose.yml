@@ -1,12 +1,8 @@
-version: '2'
+version: '3'
 
 services:
   discord-netcore:
     image: discord-netcore
     build:
-      context: ./src/Discord-NetCore
-      dockerfile: Dockerfile
-networks:
-  default:
-    external:
-      name: nat
+      context: .
+      dockerfile: src/Discord-NetCore/Dockerfile

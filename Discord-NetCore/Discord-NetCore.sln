@@ -1,18 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.12
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DADE96F3-5692-4F00-8C36-8923BE1F1275}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{55B1AEBE-E663-4A9B-AA36-0094931693B2}"
-	ProjectSection(SolutionItems) = preProject
-		docker-compose.ci.build.yml = docker-compose.ci.build.yml
-		docker-compose.yml = docker-compose.yml
-		global.json = global.json
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Discord-NetCore", "src\Discord-NetCore\Discord-NetCore.csproj", "{9BF27095-FAF5-4454-870E-FFAF7FC71743}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,6 +33,18 @@ Global
 		{9BF27095-FAF5-4454-870E-FFAF7FC71743}.Release|x64.Build.0 = Release|Any CPU
 		{9BF27095-FAF5-4454-870E-FFAF7FC71743}.Release|x86.ActiveCfg = Release|Any CPU
 		{9BF27095-FAF5-4454-870E-FFAF7FC71743}.Release|x86.Build.0 = Release|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Debug|x64.Build.0 = Debug|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Debug|x86.Build.0 = Debug|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Release|x64.ActiveCfg = Release|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Release|x64.Build.0 = Release|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Release|x86.ActiveCfg = Release|Any CPU
+		{C6C8BA05-B552-4D99-8AD8-5A134A8E169C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

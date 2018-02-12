@@ -17,20 +17,27 @@ namespace Discord_NetCore.Modules
         [Command("joinchannel", RunMode = RunMode.Async), Alias("join", "j", "voice"), Summary("Joins the voice channel the user is in")]
         public async Task JoinChannel()
         {
-            var channel = (Context.User as IGuildUser)?.VoiceChannel;
-            var guildId = Context.Guild.Id;
-            if (channel == null) { await ReplyAsync("You must be in a voice channel for me to join"); return; }
+            try
+            {
+                var channel = (Context.User as IGuildUser)?.VoiceChannel;
+                var guildId = Context.Guild.Id;
+                if (channel == null) { await ReplyAsync("You must be in a voice channel for me to join"); return; }
 
-            if (!Program.MusicPlayers.ContainsKey(guildId))
-            {
-                Program.MusicPlayers.Add(guildId, new MusicPlayer(Context));
-                await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
-                await ReplyAsync($"Joining {Context.User.Mention}'s voice channel: {channel.Name}");
+                if (!Program.MusicPlayers.ContainsKey(guildId))
+                {
+                    Program.MusicPlayers.Add(guildId, new MusicPlayer(Context));
+                    await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
+                    await ReplyAsync($"Joining {Context.User.Mention}'s voice channel: {channel.Name}");
+                }
+                else
+                {
+                    await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
+                    await ReplyAsync($"Moving to {Context.User.Mention}'s voice channel: {channel.Name}");
+                }
             }
-            else
+            catch (Exception e)
             {
-                await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
-                await ReplyAsync($"Moving to {Context.User.Mention}'s voice channel: {channel.Name}");
+                Console.WriteLine(e);
             }
         }
         /*

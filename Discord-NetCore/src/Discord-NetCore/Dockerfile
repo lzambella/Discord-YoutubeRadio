@@ -1,14 +1,21 @@
-FROM microsoft/nanoserver:10.0.14393.576
+FROM microsoft/dotnet:2.0-runtime AS base
+RUN apt-get update && apt-get install -y youtube-dl ffmpeg libopus0 libsodium18 libsodium-dev libopus-dev
+WORKDIR /app
 
-# Install .NET Core
-ENV DOTNET_VERSION 1.1.0
-ENV DOTNET_DOWNLOAD_URL https://dotnetcli.blob.core.windows.net/dotnet/release/1.1.0/Binaries/$DOTNET_VERSION/dotnet-win-x64.$DOTNET_VERSION.zip
+FROM microsoft/dotnet:2.0-sdk AS build
+WORKDIR /src
+COPY *.sln ./
+COPY src/Discord-NetCore/Discord-NetCore.csproj src/Discord-NetCore/
+COPY C:\Users\Luke\Source\Repos\Discord-YoutubeRadio\Discord-NetCore\src\Discord-NetCore\nuget.config src/Discord-NetCore/
+RUN dotnet restore
+COPY . .
+WORKDIR /src/src/Discord-NetCore
+RUN dotnet build -c Release -o /app
 
-RUN powershell -NoProfile -Command \
-        $ErrorActionPreference = 'Stop'; \
-        Invoke-WebRequest %DOTNET_DOWNLOAD_URL% -OutFile dotnet.zip; \
-        Expand-Archive dotnet.zip -DestinationPath '%ProgramFiles%\dotnet'; \
-        Remove-Item -Force dotnet.zip
+FROM build AS publish
+RUN dotnet publish -c Release -o /app
 
-RUN setx /M PATH "%PATH%;%ProgramFiles%\dotnet"
-ARG source="";
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app .
+ENTRYPOINT ["dotnet", "Discord-NetCore.dll"]

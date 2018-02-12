@@ -19,6 +19,7 @@ namespace Discord_NetCore.Modules
             var points = await _database.GetPoints(userId);
             await ReplyAsync($"{Context.User.Mention}, you have {points} points.");
         }
+        /*
         [Command("pointsleaderboard"), Summary("Check the leader boards")]
         public async Task PointLeaderboard()
         {
@@ -54,6 +55,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(ex);
             }
         }
+        */
         /*
         [Command("promote"), Summary("Spend some points to level up and get even more points.")]
         public async Task Promote()
