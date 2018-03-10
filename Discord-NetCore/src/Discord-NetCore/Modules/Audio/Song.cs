@@ -102,7 +102,7 @@ namespace Discord_NetCore.Modules.Audio
                     {
                         FileName = "./Binaries/youtube-dl.exe",
                         //Arguments = $"-x -g \"{Url}\" ",
-                        Arguments = $" -f bestaudio -g \"{Url}\" ",
+                        Arguments = $" -f worstaudio -g \"{Url}\" ",
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         RedirectStandardError = false
@@ -114,7 +114,7 @@ namespace Discord_NetCore.Modules.Audio
                     {
                         FileName = "youtube-dl",
                         //Arguments = $"-x -g \"{Url}\" ",
-                        Arguments = $" -f bestaudio -g \"{Url}\" ",
+                        Arguments = $" -f worstaudio -g \"{Url}\" ",
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         RedirectStandardError = false

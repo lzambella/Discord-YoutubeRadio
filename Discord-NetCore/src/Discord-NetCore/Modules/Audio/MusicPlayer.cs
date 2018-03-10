@@ -182,7 +182,6 @@ namespace Discord_NetCore.Modules.Audio
             } catch (Exception e)
             {
                 Console.WriteLine(e);
-                throw;
             }
         }
         /// <summary>
@@ -203,15 +202,19 @@ namespace Discord_NetCore.Modules.Audio
         /// </summary>
         /// <param name="context">CommandContext for sending a message when a new song is playing</param>
         /// <returns></returns>
-        public void RunQueue()
+        public async Task RunQueue()
         {
+            /*
             if (!AudioFree)
                 throw new AudioStreamInUseException("Something is currently playing!");
 
             StreamThread = new Thread(new ThreadStart(async () =>
                 await RunQueueThread()));
             StreamThread.Start();
-           
+            */
+            if (!AudioFree)
+                throw new AudioStreamInUseException("Something is currently playing!");
+            await RunQueueThread();
         }
         private async Task RunQueueThread()
         {
@@ -223,7 +226,7 @@ namespace Discord_NetCore.Modules.Audio
                 Song song;
                 _songQueue.TryDequeue(out song);
                 CurrentSong = song;
-                await _context.Channel.SendMessageAsync($"Now playing: `{CurrentSong.Title}`");
+                //await _context.Channel.SendMessageAsync($"Now playing: `{CurrentSong.Title}`");
                 if (CurrentSong.IsFile)
                     await PlaySong(CurrentSong.DirectLink, CancelToken);
                 else
@@ -329,7 +332,7 @@ namespace Discord_NetCore.Modules.Audio
         private async Task StreamYoutube(string url, CancellationToken cancelToken)
         {
             Console.WriteLine("Youtube requested");
-            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed))
+            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed, 96000))
             {
                 try
                 {
@@ -339,13 +342,24 @@ namespace Discord_NetCore.Modules.Audio
                         //Console.WriteLine("Windows Detected");
                         _process = Process.Start(new ProcessStartInfo
                         {
+                            // 'Direct' method using only ffmpeg and a music link
+                            
                             FileName = "Binaries\\ffmpeg",
                             Arguments =
                              $"-i \"{url}\" " +
-                            " -ac 2 -f s16le -ar 48000 -loglevel quiet pipe:1",
+                            " -ac 2 -f s16le -b:a 192k -ar 48000 pipe:1",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = false
+                            
+                            // 'indirect' method using both youtube-dl and ffmpeg
+                            /*
+                            FileName = "cmd",
+                            Arguments = $"/C youtube-dl.exe --hls-prefer-native -q -o - {url} | ffmpeg.exe -i - -f s16le -ar 48000 -ac 2 -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 10 pipe:1 -b:a 96K ",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = false,
+                            */
                         });
                     } else
                     {
@@ -361,6 +375,7 @@ namespace Discord_NetCore.Modules.Audio
                             RedirectStandardError = false
                         });
                     }
+                    //Thread.Sleep(5000); // try and let ffmpeg do some work first??
                     Console.WriteLine("Starting process...");
                     int blockSize = 512;
                     var buffer = new byte[blockSize];
@@ -370,7 +385,7 @@ namespace Discord_NetCore.Modules.Audio
                         // Don't send any data or read from the stream if the stream is supposed to be paused
                         if (Paused) continue;
 
-                        if (byteCount == 0 || WillSkip)
+                        if (cancelToken.IsCancellationRequested || WillSkip)
                             break;
                         byteCount = await _process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
                         buffer = AdjustVolume(buffer, Volume);
@@ -414,7 +429,7 @@ namespace Discord_NetCore.Modules.Audio
                     FileName = "Binaries\\ffmpeg",
                     Arguments =
                     $"-i \"{song}\" " +
-                    "-f s16le -ar 48000 -ac 2 pipe:1 -loglevel quiet",
+                    "-f s16le -ar 48000 -ac 2 pipe:1",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = false
@@ -422,7 +437,7 @@ namespace Discord_NetCore.Modules.Audio
                 try
                 {
                     Console.WriteLine("Playing a file...");
-                    int blockSize = 512;
+                    int blockSize = 216;
                     var buffer = new byte[blockSize];
                     int byteCount = 1;
                     do
