@@ -476,16 +476,8 @@ namespace Discord_NetCore.Modules.Audio
                 try
                 {
                     RTPReadStream test = new RTPReadStream(stream);
-                    int blockSize = 1024;
-                    var buffer = new byte[blockSize];
-                    int byteCount = 1;
-                    do
-                    {
-
-                        byteCount = await test.ReadAsync(buffer, 0, blockSize);
-                        buffer = AdjustVolume(buffer, Volume);
-                        await stream.WriteAsync(buffer, 0, blockSize);
-                    } while (true);
+                    Discord.Audio.Streams.InputStream input = new InputStream();
+                    await input.CopyToAsync(stream);
 
                 }
                 catch (OperationCanceledException)

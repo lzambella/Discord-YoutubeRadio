@@ -304,6 +304,7 @@ namespace Discord_NetCore
 
         // TODO: update the points for all people in all servers
         // Perhaps create flags for each server that trigger how users get points
+        // Also make it check the current minute from the system clock instead of keeping track in a database (old method for when the bot restarted every 5 minutes)
         private async void PointIncrementer(Object StateInfo)
         {
             try
@@ -464,8 +465,6 @@ namespace Discord_NetCore
         /// <returns></returns>
         public async Task CreateTableForServer(string serverId)
         {
-
-            // TODO:
             try
             {
                 var sql = $"CREATE TABLE @serverId (" +
@@ -488,11 +487,24 @@ namespace Discord_NetCore
 
         /// <summary>
         /// Checks if the table for a certain server has already been created
+        /// check if it has been added to the master list already
         /// </summary>
         /// <returns>True if exists</returns>
-        public async Task<Boolean> TableExists(string discordID)
+        public async Task<Boolean> TableExists(string serverId)
         {
-            //TODO:
+            var sql = $"SELECT * FROM MasterList WHERE ServerId = @serverId;";
+            var command = new SqlCommand(sql, Connection);
+            command.Parameters.Add(new SqlParameter("serverId", serverId));
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                string id = "";
+                while (await reader.ReadAsync())
+                {
+                    id = reader[0] as string;
+                }
+                if (id.Any()) return true;
+            }
+
             return false;
         }
 
@@ -501,9 +513,18 @@ namespace Discord_NetCore
         /// Used to determine which servers the bot will add points to.
         /// </summary>
         /// <returns></returns>
-        public async Task CreateMasterList()
+        private async Task CreateMasterList()
         {
-            //TODO:
+            try
+            {
+                var sql = "CREATE TABLE MasterList (" +
+                          "ServerId varchar(255));";
+                var command = new SqlCommand(sql, Connection);
+                var result = await command.ExecuteNonQueryAsync();
+            } catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         /// <summary>
@@ -511,9 +532,19 @@ namespace Discord_NetCore
         /// </summary>
         /// <param name="serverId"></param>
         /// <returns></returns>
-        public async Task AddToMasterList(string serverId)
+        private async Task AddToMasterList(string serverId)
         {
-            //TODO:
+            try
+            {
+                var sql = "INSERT INTO MasterList(serverId) VALUES (@serverId);";
+                var command = new SqlCommand(sql, Connection);
+                command.Parameters.Add(new SqlParameter("serverId", serverId));
+                var result = await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         /// <summary>
@@ -523,12 +554,14 @@ namespace Discord_NetCore
         /// <returns>True if the server was successfully created</returns>
         public async Task<Boolean> AddServer(string serverId)
         {
-            //TODO:
             try
             {
+                await CreateTableForServer(serverId);
+                await AddToMasterList(serverId);
                 return true;
             } catch (Exception e)
             {
+                Console.WriteLine(e);
                 return false;
             }
         }

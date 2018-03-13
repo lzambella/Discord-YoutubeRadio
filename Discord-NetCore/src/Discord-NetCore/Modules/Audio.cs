@@ -214,7 +214,7 @@ namespace Discord_NetCore.Modules
             var audioPlayer = GetMusicPlayerForGuild();
             await audioPlayer.SkipSong(Context);
         }
-        //[Command("repeat", RunMode = RunMode.Async)]
+        [Command("repeat", RunMode = RunMode.Async)]
         public async Task Repeater()
         {
             var audioPlayer = GetMusicPlayerForGuild();
@@ -234,7 +234,7 @@ namespace Discord_NetCore.Modules
                     await musicPlayer.AddFileToQueue(url, Context, false);
                     await ReplyAsync("Recieved a custom song");
                     if (musicPlayer.AudioFree == true)
-                        musicPlayer.RunQueue();
+                        await musicPlayer.RunQueue();
                 }
                 else
                 {
