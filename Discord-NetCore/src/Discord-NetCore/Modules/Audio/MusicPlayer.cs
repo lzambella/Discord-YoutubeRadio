@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Cloud.Speech.V1;
 
 namespace Discord_NetCore.Modules.Audio
 {
@@ -75,6 +76,7 @@ namespace Discord_NetCore.Modules.Audio
 
         private ProcessStartInfo _processInfo { get; set; }
 
+        private Discord.Audio.AudioInStream InputStream { get; set; }
         /// <summary>
         /// Set up a new music player
         /// </summary>
@@ -84,7 +86,9 @@ namespace Discord_NetCore.Modules.Audio
             _context = context;
             AudioFree = true;
         }
+
         public Song CurrentSong { get; private set; }
+
         /// <summary>
         /// Attempts to move the bot to an audio channel
         /// </summary>
@@ -92,16 +96,50 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         public async Task MoveToVoiceChannel(IVoiceChannel chan)
         {
+            AudioClient = await chan.ConnectAsync(x => x.StreamCreated += StreamCreated);
+            ConnectedChannel = chan;
+
+           
+            //This seems redundant
+            /*
             if (AudioClient == null || AudioClient.ConnectionState == ConnectionState.Disconnected)
             {
                 AudioClient = await chan.ConnectAsync();
                 ConnectedChannel = chan;
+                AudioClient.StreamCreated += AudioClient_StreamCreated;
             }
             // If the bot is connected to a voice channel and the user is in a different voice channel
             else if (AudioClient.ConnectionState == ConnectionState.Connected && !(chan.Id == ConnectedChannel.Id))
             {
                 AudioClient = await chan.ConnectAsync();
                 ConnectedChannel = chan;
+            }
+            */
+        }
+
+        /// <summary>
+        /// Creates a new stream when a user joins the voice channel
+        /// 
+        /// </summary>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <returns></returns>
+        private async Task StreamCreated(ulong arg1, AudioInStream arg2)
+        {
+            try
+            {
+                using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed))
+                {
+                    if (Program.DEBUG)
+                    {
+                        Console.WriteLine(arg1); // User ID
+                        await arg2.CopyToAsync(stream);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
 
@@ -476,8 +514,7 @@ namespace Discord_NetCore.Modules.Audio
                 try
                 {
                     RTPReadStream test = new RTPReadStream(stream);
-                    Discord.Audio.Streams.InputStream input = new InputStream();
-                    await input.CopyToAsync(stream);
+                    //await input.CopyToAsync(stream);
 
                 }
                 catch (OperationCanceledException)

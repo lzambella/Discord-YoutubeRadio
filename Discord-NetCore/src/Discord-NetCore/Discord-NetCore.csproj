@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="1.0.2" />
+    <PackageReference Include="Google.Cloud.Speech.V1" Version="1.0.1" />
     <PackageReference Include="Microsoft.NETCore.App">
       <Version>2.0.4</Version>
     </PackageReference>
