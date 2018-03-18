@@ -30,7 +30,8 @@ namespace Discord_NetCore
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                if (Program.DEBUG)
+                    Console.WriteLine(e);
                 Console.WriteLine("Error establishing a connection... Database commands disabled");
             }
         }

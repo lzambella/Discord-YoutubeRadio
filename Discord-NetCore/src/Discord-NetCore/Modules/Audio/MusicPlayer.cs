@@ -133,7 +133,7 @@ namespace Discord_NetCore.Modules.Audio
                     if (Program.DEBUG)
                     {
                         Console.WriteLine(arg1); // User ID
-                        await arg2.CopyToAsync(stream);
+                        //await arg2.CopyToAsync(stream);
                     }
                 }
             }
