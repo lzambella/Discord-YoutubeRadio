@@ -127,7 +127,7 @@ namespace Discord_NetCore.Modules
             try
             {
                 var audioPlayer = GetMusicPlayerForGuild();
-                audioPlayer.RunQueue();
+                await audioPlayer.RunQueue();
             }
             catch (AudioStreamInUseException)
             {

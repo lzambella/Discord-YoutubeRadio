@@ -119,7 +119,7 @@ namespace Discord_NetCore.Modules.Audio
 
         /// <summary>
         /// Creates a new stream when a user joins the voice channel
-        /// 
+        /// repeats all their audio
         /// </summary>
         /// <param name="arg1"></param>
         /// <param name="arg2"></param>
@@ -264,11 +264,24 @@ namespace Discord_NetCore.Modules.Audio
                 Song song;
                 _songQueue.TryDequeue(out song);
                 CurrentSong = song;
+
                 //await _context.Channel.SendMessageAsync($"Now playing: `{CurrentSong.Title}`");
+                
+                var builder = new EmbedBuilder()
+                    .WithTitle("Gachi's Gucci Jukebox!")
+                    .WithColor(new Color(0xA4F233))
+                    .WithThumbnailUrl("http://i0.kym-cdn.com/photos/images/original/000/666/924/849.jpg")
+                    .AddField("Now Playing:", $"{CurrentSong.Title}")
+                    .AddField("Up Next:", $"to be added");
+                var embed = builder.Build();
+                await _context.Channel.SendMessageAsync(
+                    "",
+                    embed: embed);
+                    
                 if (CurrentSong.IsFile)
                     await PlaySong(CurrentSong.DirectLink, CancelToken);
                 else
-                    await StreamYoutube(CurrentSong.DirectLink, CancelToken);
+                    await StreamAudio(CurrentSong.DirectLink, CancelToken);
                 Console.WriteLine("Playing the next song...");
             }
             AudioFree = true;
@@ -306,13 +319,13 @@ namespace Discord_NetCore.Modules.Audio
         public async Task SkipSong(ICommandContext context)
         {
             var song = CurrentSong;
-            if (context.User.Id == song.RequestedBy.User.Id)
+            if (context.User.Id == song.RequestedBy)
 
             {
                 await context.Channel.SendMessageAsync($"{context.User} is skipping their own song.");
                 WillSkip = true;
             }
-            else if (song.UsersVoted.Any(user => user.User.Id == context.User.Id))
+            else if (song.UsersVoted.Any(user => user == context.User.Id))
             {
                 await context.Channel.SendMessageAsync("You have already voted.");
             }
@@ -321,7 +334,7 @@ namespace Discord_NetCore.Modules.Audio
                 var voiceUsers = await ConnectedChannel.GetUsersAsync().Flatten();
                 var requiredVotes = voiceUsers.Count(user => !user.IsBot) / 2; // Half the users in voice 
                 song.SkipVotes++;
-                song.UsersVoted.Add(context);
+                song.UsersVoted.Add(context.User.Id);
                 await context.Channel.SendMessageAsync($"Votes: {song.SkipVotes}/{requiredVotes}");
                 if (song.SkipVotes >= requiredVotes && !WillSkip)
                 {
@@ -367,7 +380,7 @@ namespace Discord_NetCore.Modules.Audio
         /// </summary>
         /// <param name="url">Url of the video</param>
         /// <returns></returns>
-        private async Task StreamYoutube(string url, CancellationToken cancelToken)
+        private async Task StreamAudio(string url, CancellationToken cancelToken)
         {
             Console.WriteLine("Youtube requested");
             using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed, 96000))

@@ -57,6 +57,11 @@ namespace Discord_NetCore
         public static string FacebookToken { get; private set; }
         private Timer Timer { get; set; }
         /// <summary>
+        /// List of playlists
+        /// </summary>
+        public static List<Playlist> Playlists = new List<Playlist>();
+
+        /// <summary>
         /// Main program
         /// </summary>
         /// <param name="args"></param>
@@ -107,6 +112,28 @@ namespace Discord_NetCore
                 Console.WriteLine("Successfully logged in.");
                 Console.WriteLine($"Connected to {Client.Guilds.Count} servers!");
             };
+
+            ///TODO: Deserialize all the playlists in the playlists folder
+            Console.WriteLine("Attempting to read the playlists.");
+            XmlSerializer deserializer = new XmlSerializer(typeof(Playlist));
+            var files = Directory.GetFiles($"{Directory.GetCurrentDirectory()}\\Playlists");
+            foreach (string file in files)
+            {
+                try
+                {
+                    StreamReader reader = new StreamReader(file);
+                    if (!file.Contains(".xml")) continue;
+                    Playlist p = (Playlist)deserializer.Deserialize(reader);
+                    
+                    Playlists.Add(p);
+                    reader.Dispose();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+            Console.WriteLine("Playlist reading finished.");
             //Timer = new Timer(ImagePoster, null, 6000, 6000);
             await Task.Delay(-1);
 

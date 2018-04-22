@@ -10,17 +10,26 @@ namespace Discord_NetCore.Modules.Audio
 {
     public class Song
     {
-        public bool IsFile { get; private set; }
-        public string Url { get; private set; }
-        public string Title { get; private set; }
-        public string Length { get; private set; }
+        public bool IsFile { get; set; }
+        public string Url { get; set; }
+        public string Title { get; set; }
+        public string Length { get; set; }
         private string[] Parameters { get; set; }
         public short SkipVotes { get; set; }
-        public string DirectLink { get; private set; }
+        public string DirectLink { get; set; }
 
-        public ICommandContext RequestedBy { get; private set; }
-        public IList<ICommandContext> UsersVoted { get; set; }
+        //public ICommandContext RequestedBy { get; private set; }
+        public ulong RequestedBy { get; set; }
+        public List<ulong> UsersVoted { get; set; }
 
+        public Song()
+        {
+            IsFile = false;
+            Url = "unknown";
+            Title = "unknown";
+            Length = "unknown";
+            DirectLink = "unknown";
+        }
         public Song(string url)
         {
             Parameters = url.Split('&');
@@ -30,7 +39,7 @@ namespace Discord_NetCore.Modules.Audio
         {
             Parameters = url.Split('&');
             Url = Parameters[0];
-            RequestedBy = requestedBy;
+            RequestedBy = requestedBy.User.Id;
         }
         public Song(string url, ICommandContext requestedBy, bool file)
         {
@@ -47,7 +56,7 @@ namespace Discord_NetCore.Modules.Audio
                 DirectLink = url;
             }
 
-            RequestedBy = requestedBy;
+            RequestedBy = requestedBy.User.Id;
         }
         /// <summary>
         /// Gets the video info at the URL
@@ -93,8 +102,13 @@ namespace Discord_NetCore.Modules.Audio
                 process.Dispose();
                 Title = title;
                 Length = duration;
-
-                // hacky way to get the direct link
+                // hack to check whether is youtube link or not, this breaks other sites like soundcloud
+                if (!Url.ToUpper().Contains("YOUTUBE"))
+                {
+                    DirectLink = Url;
+                    return;
+                }
+                // hacky way to get the direct link if youtube
                 if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
                 {
 
