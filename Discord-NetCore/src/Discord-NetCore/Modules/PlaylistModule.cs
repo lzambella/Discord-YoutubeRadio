@@ -10,7 +10,7 @@ using System.IO;
 
 namespace Discord_NetCore.Modules
 {
-    [Name("Playlist")]
+    //[Name("Playlist")]
     public class PlaylistModule : ModuleBase
     {
         /// <summary>
@@ -137,7 +137,6 @@ namespace Discord_NetCore.Modules
                     return;
                 }
                 await ReplyAsync("I am not connected to a voice channel.");
-                return;
             } catch (IndexOutOfRangeException e)
             {
                 Console.WriteLine("Wrong index specified");

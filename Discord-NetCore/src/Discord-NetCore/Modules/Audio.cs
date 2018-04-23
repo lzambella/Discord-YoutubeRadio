@@ -109,10 +109,6 @@ namespace Discord_NetCore.Modules
                 await Context.Message.DeleteAsync();
                 await ReplyAsync("Added the song to the queue.");
             }
-            if (audioPlayer.AutoPlay && audioPlayer.AudioFree)
-            {
-                await RunQueue();
-            }
         }
         [Command("shuffle"), Summary("Shuffle the current queue")]
         public async Task Shuffle()
@@ -173,7 +169,7 @@ namespace Discord_NetCore.Modules
             else await ReplyAsync($"```{audioPlayer.GetQueue()}```");
         }
 
-        //[Command("autoplay"), Summary("Toggle autoplay"), Alias("a")]
+        [Command("autoplay"), Summary("Toggle autoplay"), Alias("a")]
         public async Task AutoPlay()
         {
             var audioPlayer = GetMusicPlayerForGuild();
@@ -214,7 +210,7 @@ namespace Discord_NetCore.Modules
             var audioPlayer = GetMusicPlayerForGuild();
             await audioPlayer.SkipSong(Context);
         }
-        [Command("repeat", RunMode = RunMode.Async)]
+        //[Command("repeat", RunMode = RunMode.Async)]
         public async Task Repeater()
         {
             var audioPlayer = GetMusicPlayerForGuild();

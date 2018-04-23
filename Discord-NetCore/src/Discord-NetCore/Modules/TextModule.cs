@@ -85,30 +85,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e.StackTrace);
             }
         }
-        */
-        /*
-        [Command("findanime"), Summary("Search for anime on MyAnimeList")]
-        public async Task FindAnime([Summary("Keywords or id")]string keywords = null)
-        {
-            if (keywords == null) return;
-            try
-            { 
-                var animeSearcher = new MAL.AnimeSearch("epicfailol", "ccvtxNi7vcvD");
-                var anime = await animeSearcher.FindAnime(keywords);
-
-                var s = "";
-                for (var i = 0; i < 5 || i < anime.Entries.Count(); i++)
-                {
-                    var entry = anime.Entries[i];
-                    s += $"```{entry.Title}\n{entry.EnglishTitle}:{entry.EpisodeCount} episodes```\n\n ```{entry.Synopsis}```\n";
-                    await ReplyAsync($"{entry.ImageUrl}\n{s}");
-                    await ReplyAsync("----------------------------------------------------");
-                }
-            } catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-        */
+        */  
 
     }
 }

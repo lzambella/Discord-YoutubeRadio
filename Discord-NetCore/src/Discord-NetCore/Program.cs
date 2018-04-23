@@ -116,7 +116,7 @@ namespace Discord_NetCore
             ///TODO: Deserialize all the playlists in the playlists folder
             Console.WriteLine("Attempting to read the playlists.");
             XmlSerializer deserializer = new XmlSerializer(typeof(Playlist));
-            var files = Directory.GetFiles($"{Directory.GetCurrentDirectory()}\\Playlists");
+            var files = Directory.GetFiles($"{Directory.GetCurrentDirectory()}/Playlists");
             foreach (string file in files)
             {
                 try

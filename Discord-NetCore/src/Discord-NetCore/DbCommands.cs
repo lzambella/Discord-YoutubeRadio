@@ -26,7 +26,7 @@ namespace Discord_NetCore
                 Connection.Open();
                 Console.WriteLine($"{DateTime.Now}: Connected to database.");
                 // Start the Point Incrementation Timer
-                timer = new Timer(PointIncrementer, null, 6000, 600000);
+                timer = new Timer(PointIncrementer, null, 6000, 60000);
             }
             catch (Exception e)
             {
@@ -35,13 +35,14 @@ namespace Discord_NetCore
                 Console.WriteLine("Error establishing a connection... Database commands disabled");
             }
         }
+        /*
         public async Task<int> GetPoints(string discordId)
         {
             try
             {
                 await FixConnection();
                 var points = 0;
-                var command = new SqlCommand("SELECT GachiPoints from DiscordUser WHERE DiscordId = @id", Connection);
+                var command = new SqlCommand("SELECT Points from DiscordUser WHERE DiscordId = @id", Connection);
                 command.Parameters.Add(new SqlParameter("id", discordId));
                 using (var reader = await command.ExecuteReaderAsync())
                 {
@@ -58,7 +59,7 @@ namespace Discord_NetCore
                 return 0;
             }
         }
-
+        */
         /// <summary>
         /// Gets points from a user in a certain server
         /// </summary>
@@ -71,9 +72,8 @@ namespace Discord_NetCore
             {
                 await FixConnection();
                 var points = 0;
-                var command = new SqlCommand("SELECT GachiPoints from @serverId WHERE DiscordId = @id", Connection);
+                var command = new SqlCommand($"SELECT Points from DISCORD_SERVER_{ serverId } WHERE UserId = @id", Connection);
                 command.Parameters.Add(new SqlParameter("id", discordId));
-                command.Parameters.Add(new SqlParameter("serverId", serverId));
 
                 using (var reader = await command.ExecuteReaderAsync())
                 {
@@ -128,10 +128,10 @@ namespace Discord_NetCore
             {
                 await FixConnection();
                 var permission = 0;
-                var command = new SqlCommand("SELECT RankLevel FROM @serverId WHERE DiscordId = @id",
+                var command = new SqlCommand("SELECT Rank FROM @serverId WHERE UserdId = @id",
                     Connection);
                 command.Parameters.Add(new SqlParameter("id", discordId));
-                command.Parameters.Add(new SqlParameter("serverId", serverId));
+                command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
                 using (SqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (reader.Read())
@@ -180,10 +180,10 @@ namespace Discord_NetCore
             {
                 await FixConnection();
                 var permission = 0;
-                var command = new SqlCommand("SELECT PermissionLevel FROM @serverId WHERE DiscordId = @id",
+                var command = new SqlCommand("SELECT PermLevel FROM @serverId WHERE UserId = @id",
                     Connection);
                 command.Parameters.Add(new SqlParameter("id", discordId));
-                command.Parameters.Add(new SqlParameter("serverId", serverId));
+                command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
                 using (SqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (reader.Read())
@@ -239,7 +239,7 @@ namespace Discord_NetCore
                 Console.WriteLine(e);
             }
         }
-
+        /*
         public async Task AddUser(IGuildUser user)
         {
             try
@@ -261,6 +261,7 @@ namespace Discord_NetCore
                 Console.WriteLine(e.StackTrace);
             }
         }
+        */
         /// <summary>
         /// Add a user to a server's database
         /// </summary>
@@ -273,19 +274,19 @@ namespace Discord_NetCore
                 await FixConnection();
                 var command =
                     new SqlCommand(
-                        "INSERT INTO @serverId(DiscordId, GachiPoints, RankLevel, PermissionLevel, DiscordGuild) VALUES (@id, @points, @rank, @permission, @guild)");
-                command.Parameters.Add(new SqlParameter("serverId", serverId));
-                command.Parameters.Add(new SqlParameter("id", user.Id));
-                command.Parameters.Add(new SqlParameter("points", 0));
-                command.Parameters.Add(new SqlParameter("rank", 0));
-                command.Parameters.Add(new SqlParameter("permission", 0));
-                command.Parameters.Add(new SqlParameter("guild", user.GuildId));
+                        $"INSERT INTO DISCORD_SERVER_{serverId} (UserId, Points, PermLevel, Rank, MessageCount) VALUES (@id, @points, @rank, @permission, @MessageCount)", Connection);
+                //command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
+                command.Parameters.Add(new SqlParameter("id", user.Id.ToString()));
+                command.Parameters.Add(new SqlParameter("points", "0"));
+                command.Parameters.Add(new SqlParameter("rank", "0"));
+                command.Parameters.Add(new SqlParameter("permission", "0"));
+                command.Parameters.Add(new SqlParameter("MessageCount", "0"));
                 await command.ExecuteNonQueryAsync();
             }
             catch (Exception e)
             {
                 Console.WriteLine("Error adding user");
-                Console.WriteLine(e.StackTrace);
+                Console.WriteLine(e);
             }
         }
 
@@ -315,11 +316,6 @@ namespace Discord_NetCore
                     Connection.Close();
                     await Connection.OpenAsync();
                 }
-                if (!await IncrementPointAlgorithm())
-                {
-                    Console.WriteLine($"{DateTime.Now}: Requirements not met!");
-                    return;
-                }
 
                 var minute = 0;
                 var command = new SqlCommand("SELECT Minute FROM Timer WHERE Name = @0", Connection);
@@ -330,29 +326,52 @@ namespace Discord_NetCore
                     while (reader.Read())
                         minute = int.Parse(reader[0].ToString());
                 }
-                if (minute >= 30)
+                if (minute >= 10)
                 {
-                    var users = Program.Client.GetGuild(215339016755740673).GetVoiceChannel(215339863254368268).Users;
-                    Console.WriteLine($"{DateTime.Now}: It's Time! Adding points!");
-                    foreach (var user in users)
+                    // Get the master server list
+                    var sql = "SELECT * FROM MasterList";
+                    command = new SqlCommand(sql, Connection);
+                    var serverList = new List<string>();
+                    using (var reader = await command.ExecuteReaderAsync())
                     {
-                        if (SkipIncrement(user))
-                            continue;
-
-                        var userId = ParseString(user.Mention);
-                        var permission = await GetRank(userId);
-                        var points = 1;
-                        if (points < 1) points = 1;
-                        command =
-                            new SqlCommand("UPDATE DiscordUser SET GachiPoints = GachiPoints + @points WHERE DiscordId = @id",
-                                Connection);
-                        command.Parameters.Add(new SqlParameter("id", userId));
-                        command.Parameters.Add(new SqlParameter("points", points));
-                        await command.ExecuteNonQueryAsync();
+                        while (await reader.ReadAsync())
+                            serverList.Add(reader[0].ToString());
                     }
-                    command = new SqlCommand("UPDATE Timer SET Minute = 0 WHERE Name = @0", Connection);
-                    command.Parameters.Add(new SqlParameter("0", "PointAccumulator"));
-                    await command.ExecuteNonQueryAsync();
+
+                    foreach (var serverId in serverList)
+                    {
+                        var fixedId = ulong.Parse(serverId.Substring(15));
+                        var channels = Program.Client.GetGuild(fixedId).VoiceChannels;
+                        var users = new List<IGuildUser>();
+                        foreach (var channel in channels)
+                        {
+                            foreach (var user in channel.Users)
+                            {
+                                users.Add(user); //ineffecient code
+                            }
+                        }
+                        Console.WriteLine($"{DateTime.Now}: It's Time! Adding points!");
+                        foreach (var user in users)
+                        {
+                            if (SkipIncrement(user))
+                                continue;
+
+                            var userId = ParseString(user.Mention);
+                            //var permission = await GetRank(userId);
+                            var points = 1;
+                            if (points < 1) points = 1;
+                            command =
+                                new SqlCommand($"UPDATE DISCORD_SERVER_{fixedId} SET Points = Points + @points WHERE UserId = @id",
+                                    Connection);
+                            //command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
+                            command.Parameters.Add(new SqlParameter("id", userId));
+                            command.Parameters.Add(new SqlParameter("points", points));
+                            await command.ExecuteNonQueryAsync();
+                        }
+                        command = new SqlCommand("UPDATE Timer SET Minute = 0 WHERE Name = @0", Connection);
+                        command.Parameters.Add(new SqlParameter("0", "PointAccumulator"));
+                        await command.ExecuteNonQueryAsync(); 
+                    }
                 }
                 else
                 {
@@ -372,11 +391,11 @@ namespace Discord_NetCore
         /// </summary>
         /// <param name="channelId"></param>
         /// <returns></returns>
-        private async Task<bool> IncrementPointAlgorithm()
+        private async Task<bool> IncrementPointAlgorithm(ulong serverId)
         {
             try
             {
-                var users = Program.Client.GetGuild(215339016755740673).GetVoiceChannel(215339863254368268).Users;
+                var users = Program.Client.GetGuild(serverId).VoiceChannels.First().Users;
                 var userCount = users.Count(user => !user.IsBot);
                 //Console.WriteLine($"There are {userCount} users.");
                 return userCount > 2;
@@ -468,14 +487,14 @@ namespace Discord_NetCore
         {
             try
             {
-                var sql = $"CREATE TABLE @serverId (" +
+                var sql = $"CREATE TABLE DISCORD_SERVER_{serverId} (" +
                   $"UserId varchar(255)," +
                   $"Points int," +
                   $"PermLevel int," +
                   $"Rank int," +
                   $"MessageCount int );";
                 var command = new SqlCommand(sql, Connection);
-                command.Parameters.Add(new SqlParameter("serverId", serverId));
+                //command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
                 await command.ExecuteNonQueryAsync();
             }
             catch (Exception e)
@@ -485,7 +504,6 @@ namespace Discord_NetCore
                 throw;
             }
         }
-
         /// <summary>
         /// Checks if the table for a certain server has already been created
         /// check if it has been added to the master list already
@@ -495,7 +513,7 @@ namespace Discord_NetCore
         {
             var sql = $"SELECT * FROM MasterList WHERE ServerId = @serverId;";
             var command = new SqlCommand(sql, Connection);
-            command.Parameters.Add(new SqlParameter("serverId", serverId));
+            command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
             using (var reader = await command.ExecuteReaderAsync())
             {
                 string id = "";
@@ -539,7 +557,7 @@ namespace Discord_NetCore
             {
                 var sql = "INSERT INTO MasterList(serverId) VALUES (@serverId);";
                 var command = new SqlCommand(sql, Connection);
-                command.Parameters.Add(new SqlParameter("serverId", serverId));
+                command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
                 var result = await command.ExecuteNonQueryAsync();
             }
             catch (Exception e)

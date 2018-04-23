@@ -266,13 +266,12 @@ namespace Discord_NetCore.Modules.Audio
                 CurrentSong = song;
 
                 //await _context.Channel.SendMessageAsync($"Now playing: `{CurrentSong.Title}`");
-                
+
                 var builder = new EmbedBuilder()
                     .WithTitle("Gachi's Gucci Jukebox!")
                     .WithColor(new Color(0xA4F233))
                     .WithThumbnailUrl("http://i0.kym-cdn.com/photos/images/original/000/666/924/849.jpg")
-                    .AddField("Now Playing:", $"{CurrentSong.Title}")
-                    .AddField("Up Next:", $"to be added");
+                    .AddField("Now Playing:", $"{CurrentSong.Title}");
                 var embed = builder.Build();
                 await _context.Channel.SendMessageAsync(
                     "",
