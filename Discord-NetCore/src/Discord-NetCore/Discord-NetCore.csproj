@@ -103,6 +103,9 @@
     <None Update="Binaries\youtube-dl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Dockerfile">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="ffmpeg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -2,7 +2,9 @@ version: '3'
 
 services:
   discord-netcore:
-    image: discord-netcore
+    image: discordnetcore
     build:
       context: .
       dockerfile: src/Discord-NetCore/Dockerfile
+    env_file:
+      - Secrets.env
