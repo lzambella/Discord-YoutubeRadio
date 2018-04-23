@@ -10,17 +10,26 @@ namespace Discord_NetCore.Modules.Audio
 {
     public class Song
     {
-        public bool IsFile { get; private set; }
-        public string Url { get; private set; }
-        public string Title { get; private set; }
-        public string Length { get; private set; }
+        public bool IsFile { get; set; }
+        public string Url { get; set; }
+        public string Title { get; set; }
+        public string Length { get; set; }
         private string[] Parameters { get; set; }
         public short SkipVotes { get; set; }
-        public string DirectLink { get; private set; }
+        public string DirectLink { get; set; }
 
-        public ICommandContext RequestedBy { get; private set; }
-        public IList<ICommandContext> UsersVoted { get; set; }
+        //public ICommandContext RequestedBy { get; private set; }
+        public ulong RequestedBy { get; set; }
+        public List<ulong> UsersVoted { get; set; }
 
+        public Song()
+        {
+            IsFile = false;
+            Url = "unknown";
+            Title = "unknown";
+            Length = "unknown";
+            DirectLink = "unknown";
+        }
         public Song(string url)
         {
             Parameters = url.Split('&');
@@ -30,7 +39,7 @@ namespace Discord_NetCore.Modules.Audio
         {
             Parameters = url.Split('&');
             Url = Parameters[0];
-            RequestedBy = requestedBy;
+            RequestedBy = requestedBy.User.Id;
         }
         public Song(string url, ICommandContext requestedBy, bool file)
         {
@@ -44,10 +53,10 @@ namespace Discord_NetCore.Modules.Audio
             {
                 Parameters = url.Split('\\');
                 Title = Parameters[Parameters.Count() - 1];
-                Url = url;
+                DirectLink = url;
             }
 
-            RequestedBy = requestedBy;
+            RequestedBy = requestedBy.User.Id;
         }
         /// <summary>
         /// Gets the video info at the URL
@@ -93,16 +102,38 @@ namespace Discord_NetCore.Modules.Audio
                 process.Dispose();
                 Title = title;
                 Length = duration;
-
-                // hacky way to get the direct link
-                process = Process.Start(new ProcessStartInfo
+                // hack to check whether is youtube link or not, this breaks other sites like soundcloud
+                if (!Url.ToUpper().Contains("YOUTUBE"))
                 {
-                    FileName = "./Binaries/youtube-dl.exe",
-                    Arguments = $"-x -g \"{Url}\" ",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = false
-                });
+                    DirectLink = Url;
+                    return;
+                }
+                // hacky way to get the direct link if youtube
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                {
+
+                    process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "./Binaries/youtube-dl.exe",
+                        //Arguments = $"-x -g \"{Url}\" ",
+                        Arguments = $" -f worstaudio -g \"{Url}\" ",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = false
+                    });
+                }
+                else
+                {
+                    process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "youtube-dl",
+                        //Arguments = $"-x -g \"{Url}\" ",
+                        Arguments = $" -f worstaudio -g \"{Url}\" ",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = false
+                    });
+                }
                 streamReader = new StreamReader(process.StandardOutput.BaseStream);
                 DirectLink = await streamReader.ReadLineAsync();
                 Console.WriteLine(DirectLink);

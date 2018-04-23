@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Newtonsoft.Json;
-//using FacebookSharp;
-//sing static FacebookSharp.GraphAPI.ApiParameters.PhotoField;
-//using FacebookSharp.GraphAPI.ApiParameters;
+using FacebookSharp;
+using static FacebookSharp.GraphAPI.ApiParameters.PhotoField;
+using FacebookSharp.GraphAPI.ApiParameters;
+using FacebookSharp.GraphAPI;
 
 namespace Discord_NetCore.Modules
 {
-    //[Name("Images")]
+    [Name("Images")]
     public class ImageModule : ModuleBase
     {
 
@@ -36,7 +37,6 @@ namespace Discord_NetCore.Modules
             var files = Directory.GetFiles(directory);
             return files[rand.Next(files.Length)];
         }
-        /*
         [Command("meme"), Summary("Gets the latest randomly generated meme.")]
         public async Task MeMe()
         {
@@ -45,7 +45,7 @@ namespace Discord_NetCore.Modules
                 var token = Program.FacebookToken;
                 // Get the latest meme and post it to the general chat
                 var graphApi = new GraphApi(token, GraphApi.ApiVersion.TwoEight);
-                var page = await graphApi.GetPage("1708210979407800");
+                var page = await graphApi.GetPage("1663308127217572");
                 var fields = new PhotoField();
                 fields.Fields.Add(PhotoFields.Source);
                 fields.Fields.Add(PhotoFields.Images);
@@ -58,7 +58,6 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e);
             }
         }
-        */
         [Command("checkmeme"), Summary("Time until a new meme is avaliable")]
         public async Task CheckMeme()
         {

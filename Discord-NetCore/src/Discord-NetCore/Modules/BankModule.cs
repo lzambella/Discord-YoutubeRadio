@@ -16,9 +16,10 @@ namespace Discord_NetCore.Modules
         public async Task Bank()
         {
             var userId = _database.ParseString(Context.User.Mention);
-            var points = await _database.GetPoints(userId);
+            var points = await _database.GetPoints(userId, Context.Guild.Id.ToString());
             await ReplyAsync($"{Context.User.Mention}, you have {points} points.");
         }
+        /*
         [Command("pointsleaderboard"), Summary("Check the leader boards")]
         public async Task PointLeaderboard()
         {
@@ -54,6 +55,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(ex);
             }
         }
+        */
         /*
         [Command("promote"), Summary("Spend some points to level up and get even more points.")]
         public async Task Promote()
@@ -104,7 +106,7 @@ namespace Discord_NetCore.Modules
 
         }
         */
-        [Command("rankleaderboard"), Summary("Check rank leader board")]
+        //[Command("rankleaderboard"), Summary("Check rank leader board")]
         public async Task Rank()
         {
             try
@@ -112,8 +114,9 @@ namespace Discord_NetCore.Modules
                 var board = "";
                 var command =
                     new SqlCommand(
-                        "SELECT DiscordId, RankLevel FROM DiscordUser ORDER BY RankLevel DESC",
+                        "SELECT DiscordId, RankLevel FROM @serverId ORDER BY Rank DESC",
                         Program.Database.Connection);
+                command.Parameters.Add(new SqlParameter("serverId", Context.Guild.Id.ToString()));
                 board += "```";
                 using (var reader = await command.ExecuteReaderAsync())
                 {
@@ -145,8 +148,9 @@ namespace Discord_NetCore.Modules
         {
             try
             {
+                if (!(Context.User.Id == Program.OwnerId)) return;
                 var database = Program.Database;
-                await database.AddUser(mention);
+                await database.AddUser(mention, Context.Guild.Id.ToString());
                 await ReplyAsync($"Added {mention.Mention} to the bank.");
             }
             catch (Exception)
@@ -156,5 +160,34 @@ namespace Discord_NetCore.Modules
         }
 
 
+        [Command("addall"), Summary("Add a user to the bank")]
+        public async Task AddAll()
+        {
+            try
+            {
+                if (!(Context.User.Id == Program.OwnerId)) return;
+                var users = await Context.Guild.GetUsersAsync();
+                var database = Program.Database;
+                foreach (var user in users)
+                {
+                    await database.AddUser(user, Context.Guild.Id.ToString());
+                }
+
+                await ReplyAsync($"Added the server to the bank.");
+            }
+            catch (Exception)
+            {
+                await ReplyAsync("Error adding user to bank.");
+            }
+        }
+
+        [Command("AddToServer"), Summary("Add the current server to the bank (existing servers only)")]
+        public async Task AddServerToDatabase()
+        {
+            if (!(Context.User.Id == Program.OwnerId)) return;
+            var database = Program.Database;
+            await database.AddServer(Context.Guild.Id.ToString());
+            await ReplyAsync("Server added to the database");
+        }
     }
 }

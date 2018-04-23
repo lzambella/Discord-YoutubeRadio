@@ -17,20 +17,27 @@ namespace Discord_NetCore.Modules
         [Command("joinchannel", RunMode = RunMode.Async), Alias("join", "j", "voice"), Summary("Joins the voice channel the user is in")]
         public async Task JoinChannel()
         {
-            var channel = (Context.User as IGuildUser)?.VoiceChannel;
-            var guildId = Context.Guild.Id;
-            if (channel == null) { await ReplyAsync("You must be in a voice channel for me to join"); return; }
+            try
+            {
+                var channel = (Context.User as IGuildUser)?.VoiceChannel;
+                var guildId = Context.Guild.Id;
+                if (channel == null) { await ReplyAsync("You must be in a voice channel for me to join"); return; }
 
-            if (!Program.MusicPlayers.ContainsKey(guildId))
-            {
-                Program.MusicPlayers.Add(guildId, new MusicPlayer(Context));
-                await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
-                await ReplyAsync($"Joining {Context.User.Mention}'s voice channel: {channel.Name}");
+                if (!Program.MusicPlayers.ContainsKey(guildId))
+                {
+                    Program.MusicPlayers.Add(guildId, new MusicPlayer(Context));
+                    await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
+                    await ReplyAsync($"Joining {Context.User.Mention}'s voice channel: {channel.Name}");
+                }
+                else
+                {
+                    await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
+                    await ReplyAsync($"Moving to {Context.User.Mention}'s voice channel: {channel.Name}");
+                }
             }
-            else
+            catch (Exception e)
             {
-                await Program.MusicPlayers[guildId].MoveToVoiceChannel(channel);
-                await ReplyAsync($"Moving to {Context.User.Mention}'s voice channel: {channel.Name}");
+                Console.WriteLine(e);
             }
         }
         /*
@@ -102,10 +109,6 @@ namespace Discord_NetCore.Modules
                 await Context.Message.DeleteAsync();
                 await ReplyAsync("Added the song to the queue.");
             }
-            if (audioPlayer.AutoPlay && audioPlayer.AudioFree)
-            {
-                await RunQueue();
-            }
         }
         [Command("shuffle"), Summary("Shuffle the current queue")]
         public async Task Shuffle()
@@ -120,7 +123,7 @@ namespace Discord_NetCore.Modules
             try
             {
                 var audioPlayer = GetMusicPlayerForGuild();
-                audioPlayer.RunQueue();
+                await audioPlayer.RunQueue();
             }
             catch (AudioStreamInUseException)
             {
@@ -166,7 +169,7 @@ namespace Discord_NetCore.Modules
             else await ReplyAsync($"```{audioPlayer.GetQueue()}```");
         }
 
-        //[Command("autoplay"), Summary("Toggle autoplay"), Alias("a")]
+        [Command("autoplay"), Summary("Toggle autoplay"), Alias("a")]
         public async Task AutoPlay()
         {
             var audioPlayer = GetMusicPlayerForGuild();
@@ -225,9 +228,9 @@ namespace Discord_NetCore.Modules
                 {
                     var url = Context.Message.Attachments.First().Url;
                     await musicPlayer.AddFileToQueue(url, Context, false);
-                    await ReplyAsync("Revieced a custom song");
+                    await ReplyAsync("Recieved a custom song");
                     if (musicPlayer.AudioFree == true)
-                        musicPlayer.RunQueue();
+                        await musicPlayer.RunQueue();
                 }
                 else
                 {

@@ -1,9 +1,9 @@
-version: '2'
+version: '3'
 
 services:
   ci-build:
-    image: microsoft/aspnetcore-build:1.0.2-msbuild-preview
+    image: microsoft/aspnetcore-build:1.0-2.0
     volumes:
       - .:/src
     working_dir: /src
-    command: /bin/bash -c "dotnet restore && dotnet publish -c Release -o ./bin/Release/PublishOutput"
+    command: /bin/bash -c "dotnet restore ./Discord-NetCore.sln && dotnet publish ./Discord-NetCore.sln -c Release -o ./obj/Docker/publish"

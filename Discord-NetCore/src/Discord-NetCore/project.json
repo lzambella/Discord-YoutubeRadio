@@ -16,19 +16,14 @@
     "ubuntu.14.04-x64": {}
   },
   "dependencies": {
-    "Discord.Net": "1.0.0-rc2-00699",
-    "Microsoft.NETCore.App": "1.1.0",
     "Newtonsoft.Json": "9.0.1",
     "System.Data.SqlClient": "4.3.0",
     "System.Runtime.Serialization.Primitives": "4.3.0",
     "System.Threading.Tasks": "4.3.0",
     "System.Diagnostics.Contracts": "4.3.0"
   },
-  "scripts": {
-    "postbuild": "chmod +x youtube-dl && chmod +x ffmpeg"
-  },
   "frameworks": {
-    "netcoreapp1.1": {
+    "netcoreapp2.0": {
       "imports": "dnxcore50"
     }
   }

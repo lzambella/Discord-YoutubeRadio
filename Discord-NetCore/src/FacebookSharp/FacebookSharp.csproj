@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Facebook Graph API bindings for .NET core.</Description>
+    <VersionPrefix>1.0.2</VersionPrefix>
+    <Authors>Luke Zambella</Authors>
+    <TargetFramework>netstandard1.6</TargetFramework>
+    <AssemblyName>FacebookSharp</AssemblyName>
+    <PackageId>FacebookSharp</PackageId>
+    <NetStandardImplicitPackageVersion>1.6.0</NetStandardImplicitPackageVersion>
+    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <PackageReference Include="System.ComponentModel.Primitives" Version="4.1.0" />
+    <PackageReference Include="System.Net.Requests" Version="4.0.11" />
+    <PackageReference Include="System.Reflection.TypeExtensions" Version="4.5.0-preview1-26216-02" />
+  </ItemGroup>
+
+</Project>

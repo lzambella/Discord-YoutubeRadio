@@ -22,9 +22,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include=".dockerignore">
-      <DependentUpon>Dockerfile</DependentUpon>
-    </None>
     <None Include="Binaries\Bot Configuration\Bot-Config.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -67,18 +64,19 @@
     <None Include="Binaries\youtube-dl.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Dockerfile" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="1.0.1" />
+    <PackageReference Include="Discord.Net" Version="1.0.2" />
+    <PackageReference Include="Google.Cloud.Speech.V1" Version="1.0.1" />
+    <PackageReference Include="HttpTwo" Version="0.0.1.19" />
     <PackageReference Include="Microsoft.NETCore.App">
-      <Version>2.0.0</Version>
+      <Version>2.0.4</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>10.0.3</Version>
+      <Version>11.0.1-beta1</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SqlClient">
-      <Version>4.4.0</Version>
+      <Version>4.4.2</Version>
     </PackageReference>
     <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
     <PackageReference Include="System.Runtime.Serialization.Primitives">
@@ -90,18 +88,39 @@
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\FacebookSharp\FacebookSharp.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="Binaries\ffmpeg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Binaries\ffplay.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Binaries\ffprobe.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Binaries\youtube-dl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Dockerfile">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="ffmpeg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="libsodium.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="opus.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Playlists\TextFile1.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <PropertyGroup Label="Configuration">
-    <Optimize>False</Optimize>
+    <Optimize>false</Optimize>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>

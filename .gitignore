@@ -243,3 +243,6 @@ ModelManifest.xml
 /Discord-NetCore/src/Discord-NetCore/Properties/launchSettings.json
 /Discord-NetCore/src/Discord-NetCore/Properties/PublishProfiles
 /Discord-NetCore/src/Discord-NetCore/Data/sfx
+
+/Discord-NetCore/docker-compose.yml
+/Discord-NetCore/Secrets.env

@@ -10,7 +10,7 @@ namespace Discord_NetCore.Modules
     [Name("System")]
     public class SystemModule : ModuleBase
     {
-        [Command("memory"), Summary("View avaliable memory")]
+        //[Command("memory"), Summary("View avaliable memory")]
         public async Task GetInfo()
         {
             var process = new Process
@@ -29,14 +29,14 @@ namespace Discord_NetCore.Modules
             await ReplyAsync(output);
         }
 
-        [Command("uptime"), Summary("Print how long the bot has been online")]
+        //[Command("uptime"), Summary("Print how long the bot has been online")]
         public async Task uptime()
         {
-            var time = DateTime.Now - Process.GetCurrentProcess().StartTime;
+            var time = (DateTime.Now - Process.GetCurrentProcess().StartTime);
             await ReplyAsync($"I have been online for {time.Days}:{time.Hours}:{time.Minutes}:{time.Seconds}! [DD:HH:MM:SS]");
         }
 
-        [Command("sysinfo"), Summary("Print system information")]
+        //[Command("sysinfo"), Summary("Print system information")]
         public async Task hw()
         {
             await Program.Client.SetStatusAsync(UserStatus.Invisible);
