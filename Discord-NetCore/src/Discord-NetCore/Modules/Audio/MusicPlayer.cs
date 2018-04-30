@@ -212,11 +212,9 @@ namespace Discord_NetCore.Modules.Audio
             {
                 if (AudioFree)
                     return;
-
-                AudioCancelSource.Cancel();
-
-                if (!AudioFree)
-                    AudioFree = true;
+                AudioCancelSource.Cancel();  
+                AudioFree = true;
+                _songQueue.Clear();
             } catch (Exception e)
             {
                 Console.WriteLine(e);
