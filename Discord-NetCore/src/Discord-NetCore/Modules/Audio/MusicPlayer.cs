@@ -363,6 +363,7 @@ namespace Discord_NetCore.Modules.Audio
                     {
                         #if DEBUG
                             Console.WriteLine("Windows Detected");
+                        #endif
                         _process = Process.Start(new ProcessStartInfo
                         {
                             // 'Direct' method using only ffmpeg and a music link
@@ -388,6 +389,7 @@ namespace Discord_NetCore.Modules.Audio
                     {
                         #if DEBUG
                             Console.WriteLine("Linux Detected");
+                        #endif
                         _process = Process.Start(new ProcessStartInfo
                         {
                             FileName = "/bin/bash",
@@ -425,6 +427,7 @@ namespace Discord_NetCore.Modules.Audio
 
                     #if DEBUG
                         Console.WriteLine("Process finished.");
+                    #endif
                 }
                 catch (OperationCanceledException)
                 {
