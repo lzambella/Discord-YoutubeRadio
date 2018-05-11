@@ -60,7 +60,7 @@ namespace Discord_NetCore
         /// List of playlists
         /// </summary>
         public static List<Playlist> Playlists = new List<Playlist>();
-
+        public static string botName;
         /// <summary>
         /// Main program
         /// </summary>
@@ -120,6 +120,8 @@ namespace Discord_NetCore
                 await Client.SetGameAsync("Bose of this gym.");
                 Console.WriteLine("Successfully logged in.");
                 Console.WriteLine($"Connected to {Client.Guilds.Count} servers!");
+                var Name = await Client.GetApplicationInfoAsync();
+                botName = Name.Name;
             };
 
             ///TODO: Deserialize all the playlists in the playlists folder
