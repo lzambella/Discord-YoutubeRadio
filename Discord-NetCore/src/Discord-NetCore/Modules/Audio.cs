@@ -6,14 +6,15 @@ using System.Diagnostics;
 using Discord_NetCore.Modules.Audio;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace Discord_NetCore.Modules
 {
     [Name("Audio")]
     public class AudioModule : ModuleBase
     {
+        private const string JukeboxName = "Gachi's Gucci Jukebox!";
 
-        // Create a Join command, that will join the parameter or the user's current voice channel
         [Command("joinchannel", RunMode = RunMode.Async), Alias("join", "j", "voice"), Summary("Joins the voice channel the user is in")]
         public async Task JoinChannel()
         {
@@ -40,29 +41,7 @@ namespace Discord_NetCore.Modules
                 Console.WriteLine(e);
             }
         }
-        /*
-        [Command("annoy"), Summary("Play a random sound effect"), Alias("sfx", "g")]
-        public async Task Gachimuchi()
-        {
-            try
-            {
-                var audioPlayer = GetMusicPlayerForGuild();
-                if (audioPlayer == null)
-                    await ReplyAsync("I am not in a voice channel");
-                else
-                {
-                    var files = Directory.GetFiles("Data/sfx/");
-                    var rand = DateTime.Now.ToFileTimeUtc() % files.Length;
-                    Console.WriteLine($"Selected {files[rand]}");
-                    await audioPlayer.PlaySong(files[(int)rand]);
-                }
-            }
-            catch (Exception e)
-            {
 
-                Console.WriteLine(e);
-            }
-        */
         [Command("custom"), Summary("plays a direct song.")]
         public async Task PlayCustomSong(string path)
         {
@@ -109,6 +88,9 @@ namespace Discord_NetCore.Modules
                 await Context.Message.DeleteAsync();
                 await ReplyAsync("Added the song to the queue.");
             }
+
+            if (audioPlayer.AutoPlay && audioPlayer.AudioFree)
+                await audioPlayer.RunQueue();
         }
         [Command("shuffle"), Summary("Shuffle the current queue")]
         public async Task Shuffle()
@@ -154,7 +136,7 @@ namespace Discord_NetCore.Modules
         {
             var audioPlayer = GetMusicPlayerForGuild();
             if (!audioPlayer.Paused)
-                await ReplyAsync("It's already playing or its set to play!");
+                await ReplyAsync("It's not paused!");
             else
             {
                 audioPlayer.TogglePause();
@@ -165,8 +147,21 @@ namespace Discord_NetCore.Modules
         public async Task CheckQueue()
         {
             var audioPlayer = GetMusicPlayerForGuild();
-            if (audioPlayer.GetQueue().Length == 0) await ReplyAsync("Nothing in queue!");
-            else await ReplyAsync($"```{audioPlayer.GetQueue()}```");
+            if (audioPlayer.GetQueue().Count == 0) await ReplyAsync("Nothing in queue!");
+            else
+            {
+                var stringBuilder = new StringBuilder();
+                audioPlayer.GetQueue().ForEach(song => stringBuilder.AppendLine($"{song.Title} -- {song.Length}"));
+                var builder = new EmbedBuilder()
+                    .WithTitle($"{JukeboxName}")
+                    .WithColor(new Color(0xA4F233))
+                    .WithThumbnailUrl("http://i0.kym-cdn.com/photos/images/original/000/666/924/849.jpg")
+                    .AddField("Play Status", (!audioPlayer.Paused && !audioPlayer.AudioFree) ? "Currently playing!" : "Currently paused!")
+                    .AddField("Autoplay Status", audioPlayer.AutoPlay ? "Autoplay Enabled!" : "Autoplay Disabled!")
+                    .AddField("Current Song", audioPlayer.CurrentSong == null ? "No song!" : $"{audioPlayer.CurrentSong.Title.Substring(0,20)} -- {audioPlayer.CurrentSong.Length}")
+                    .AddField("Queue", $"{stringBuilder}");
+                await ReplyAsync("", embed: builder);
+            }
         }
 
         [Command("autoplay"), Summary("Toggle autoplay"), Alias("a")]
@@ -179,7 +174,7 @@ namespace Discord_NetCore.Modules
             else await ReplyAsync("Autoplay enabled!");
 
         }
-        [Command("stop", RunMode = RunMode.Async), Summary("Stops the current song.")]
+        [Command("stop", RunMode = RunMode.Async), Summary("Stops the queue.")]
         public async Task StopAudio()
         {
             if (Context.User.Id != Program.OwnerId)
@@ -210,13 +205,7 @@ namespace Discord_NetCore.Modules
             var audioPlayer = GetMusicPlayerForGuild();
             await audioPlayer.SkipSong(Context);
         }
-        //[Command("repeat", RunMode = RunMode.Async)]
-        public async Task Repeater()
-        {
-            var audioPlayer = GetMusicPlayerForGuild();
-            await audioPlayer.RepeatAudio();
-            await ReplyAsync("I'm listening");
-        }
+
         [Command("upload", RunMode = RunMode.Async)]
         public async Task UploadSong()
         {

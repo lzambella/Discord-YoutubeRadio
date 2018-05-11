@@ -51,7 +51,11 @@ namespace Discord_NetCore.Modules
                 fields.Fields.Add(PhotoFields.Images);
                 var images = await page.GetPhotos(fields, true);
                 var meme = images.PhotoNodes.First().Images.First().Source;
-                await ReplyAsync($"Here's the latest meme: {meme}");
+                var embedded = new EmbedBuilder()
+                    .WithTitle("Gachi's funky memes")
+                    .WithImageUrl(meme)
+                    .WithFooter($"New meme in T-minus {((60 - DateTime.Now.Minute) % 30)} minutes.");
+                await ReplyAsync($"", embed:embedded);
             }
             catch (Exception e)
             {
