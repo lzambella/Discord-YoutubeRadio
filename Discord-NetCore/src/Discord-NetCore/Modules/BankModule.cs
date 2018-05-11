@@ -11,7 +11,7 @@ namespace Discord_NetCore.Modules
     [Name("Bank")] 
     public class BankModule : ModuleBase
     {
-        private readonly string _bankTitle = "Gachi's Credit Union";
+        private readonly string _bankTitle = $"{Program.botName}'s Credit Union";
         private readonly DbHandler _database = Program.Database;
 
         [Command("bank"), Summary("Check your points")]
@@ -25,8 +25,8 @@ namespace Discord_NetCore.Modules
                     .WithTitle(_bankTitle)
                     .WithColor(155, 165, 102)
                     .WithCurrentTimestamp()
-                    .WithDescription("Check your Gachi Points")
-                    .AddField($"{Context.User.Username}'s Gachi Points", $"{points}");
+                    .WithDescription("Check your Points")
+                    .AddField($"{Context.User.Username}'s Points", $"{points}");
                 await ReplyAsync($"", embed: embedded);
             }
             catch (Exception e)
@@ -52,13 +52,15 @@ namespace Discord_NetCore.Modules
                 foreach (var user in users)
                 {
                     var points = await _database.GetPoints(user.Id.ToString(), user.GuildId.ToString());
-                    dict.Add(user.Username, points);
+                    dict.Add(user.Nickname, points);
                 }
-
-                dict.OrderByDescending(i => i.Value);
-                foreach(var i in dict)
+                int x = 0;
+                foreach (var i in dict.OrderByDescending(i => i.Value))
+                {
+                    if (x == 4) break;
                     embedded.AddField($"{i.Key}", $"{i.Value} Points");
-
+                    x++;
+                }
                 await ReplyAsync("", embed: embedded);
             }
             catch (Exception ex)

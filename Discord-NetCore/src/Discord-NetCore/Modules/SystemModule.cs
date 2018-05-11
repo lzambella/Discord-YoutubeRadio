@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -29,11 +30,11 @@ namespace Discord_NetCore.Modules
             await ReplyAsync(output);
         }
 
-        //[Command("uptime"), Summary("Print how long the bot has been online")]
+        [Command("uptime"), Summary("Print how long the bot has been online")]
         public async Task uptime()
         {
             var time = (DateTime.Now - Process.GetCurrentProcess().StartTime);
-            await ReplyAsync($"I have been online for {time.Days}:{time.Hours}:{time.Minutes}:{time.Seconds}! [DD:HH:MM:SS]");
+            await ReplyAsync($"I have been online for {time.ToString("hh:mm:ss")}");
         }
 
         //[Command("sysinfo"), Summary("Print system information")]
@@ -56,6 +57,7 @@ namespace Discord_NetCore.Modules
                     await ReplyAsync("Unknown command");
                     return;
                 }
+                    
                 var commandName = command.Name;
                 var commandSummary = command.Summary;
                 var commandParameters = command.Parameters;
@@ -63,24 +65,28 @@ namespace Discord_NetCore.Modules
                 var paramString = "";
                 foreach (var parameter in commandParameters)
                     paramString += $"<{parameter.Summary}> ";
-                await ReplyAsync($"Name: `{commandName}`\n" +
-                                 $"Description: `{commandSummary}`\n" +
-                                 $"Usage: `!{commandName} {paramString}`\n" +
-                                 $"Aliases: `{commandAlias}`");
+                var embedded = new EmbedBuilder()
+                            .WithTitle(commandName)
+                            .WithDescription(commandSummary)
+                            .AddField("Usage", $"!{commandName} {paramString}")
+                            .AddField("Aliases", $"{commandAlias}");
+                await ReplyAsync($"",embed:embedded);
             }
             else
             {
+                var embedded = new EmbedBuilder()
+                    .WithTitle("Gachi's Helpdesk.")
+                    .WithFooter("Type !help <command name> for more info.");
                 foreach (var module in modules)
                 {
-                    str += $"{module.Name}: ";
-                    foreach (var command in module.Commands)
-                        str += $"{command.Name} ";
-                    str += '\n';
+                    var commandNames = module.Commands.ToList();
+                    var builder = new StringBuilder();
+                    foreach (var command in commandNames)
+                        builder.Append($"{command.Name} ");
+
+                    embedded.AddField($"{module.Name}", $"{builder}");
                 }
-                await ReplyAsync("```\n" +
-                                 "Commands\n" +
-                                 $"{str}\n" +
-                                 "Type !help <command> for more info.```");
+                await ReplyAsync("", embed:embedded);
 
             }
         }
