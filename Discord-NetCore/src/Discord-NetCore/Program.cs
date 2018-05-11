@@ -71,13 +71,22 @@ namespace Discord_NetCore
             var discordToken = Environment.GetEnvironmentVariable("discordToken");
             var databaseString = Environment.GetEnvironmentVariable("databaseString");
             FacebookToken = Environment.GetEnvironmentVariable("facebookToken");
+            if (discordToken.Length == 0) // if the environment variables cannot be found
+            {
+                for (int i = 0; i < args.Length; i++) 
+                {
+                    if (args[i] == "--discordToken") discordToken = args[i + 1].Replace("\"", "\0");
+                    else if (args[i] == "--databaseString") databaseString = args[i + 1].Replace("\"", "\0");
+                    else if (args[i] == "--facebookToken") FacebookToken = args[i + 1].Replace("\"", "\0");
+                }
+            }
             Console.WriteLine("Successfully read the settings");
-
+            Console.WriteLine($"{discordToken}\n{databaseString}\n{FacebookToken}");
             Console.WriteLine("Logging into server");
 
             var config = new DiscordSocketConfig
             {
-                ConnectionTimeout = 10000
+                ConnectionTimeout = 100000
             };
             Client = new DiscordSocketClient(config);
             commands = new CommandService();
