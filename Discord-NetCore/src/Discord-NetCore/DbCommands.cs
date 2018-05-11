@@ -146,6 +146,12 @@ namespace Discord_NetCore
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="discordId"></param>
+        /// <returns></returns>
+        /// deprecated
         public async Task<int> GetPermission(string discordId)
         {
             try

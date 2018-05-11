@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,52 +11,63 @@ namespace Discord_NetCore.Modules
     [Name("Bank")] 
     public class BankModule : ModuleBase
     {
+        private readonly string _bankTitle = "Gachi's Credit Union";
         private readonly DbHandler _database = Program.Database;
 
         [Command("bank"), Summary("Check your points")]
         public async Task Bank()
         {
-            var userId = _database.ParseString(Context.User.Mention);
-            var points = await _database.GetPoints(userId, Context.Guild.Id.ToString());
-            await ReplyAsync($"{Context.User.Mention}, you have {points} points.");
+            try
+            {
+                var userId = _database.ParseString(Context.User.Mention);
+                var points = await _database.GetPoints(userId, Context.Guild.Id.ToString());
+                var embedded = new EmbedBuilder()
+                    .WithTitle(_bankTitle)
+                    .WithColor(155, 165, 102)
+                    .WithCurrentTimestamp()
+                    .WithDescription("Check your Gachi Points")
+                    .AddField($"{Context.User.Username}'s Gachi Points", $"{points}");
+                await ReplyAsync($"", embed: embedded);
+            }
+            catch (Exception e)
+            {
+#if DEBUG
+                Console.WriteLine(e);
+#endif
+                await ReplyAsync("Something has gone wrong.");
+            }
         }
-        /*
-        [Command("pointsleaderboard"), Summary("Check the leader boards")]
+
+        [Command("leaderboard"), Summary("Check who has the most points.")]
         public async Task PointLeaderboard()
         {
             try
             {
-                await _database.FixConnection();
-                var board = "";
-                var command =
-                    new SqlCommand(
-                        "SELECT DiscordId, GachiPoints FROM DiscordUser ORDER BY GachiPoints DESC", Program.Database.Connection);
-                board += "```";
-                using (var reader = await command.ExecuteReaderAsync())
+                var embedded = new EmbedBuilder()
+                    .WithTitle($"{_bankTitle}")
+                    .WithColor(155, 165, 102)
+                    .WithDescription("See who has the most points!");
+                var dict = new Dictionary<string, int>();
+                var users = await Context.Guild.GetUsersAsync();
+                foreach (var user in users)
                 {
-                    while (reader.Read())
-                    {
-                        try
-                        {
-                            var users = await Context.Channel.GetUsersAsync().Flatten();
-                            var username = users.Single(user => user.Id == ulong.Parse(reader[0].ToString())).Username;
-                            board += $"{username} : {reader[1]} Points\n";
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex);
-                        }
-                    }
+                    var points = await _database.GetPoints(user.Id.ToString(), user.GuildId.ToString());
+                    dict.Add(user.Username, points);
                 }
-                board += "```";
-                await ReplyAsync(board);
+
+                dict.OrderByDescending(i => i.Value);
+                foreach(var i in dict)
+                    embedded.AddField($"{i.Key}", $"{i.Value} Points");
+
+                await ReplyAsync("", embed: embedded);
             }
             catch (Exception ex)
             {
+#if DEBUG
                 Console.WriteLine(ex);
+#endif
             }
         }
-        */
         /*
         [Command("promote"), Summary("Spend some points to level up and get even more points.")]
         public async Task Promote()
@@ -143,7 +155,7 @@ namespace Discord_NetCore.Modules
             }
         }
 
-        [Command("add"), Summary("Add a user to the bank")]
+        [Command("add"), Summary("Add a user to the bank. Requires bot ownership.")]
         public async Task Add(IGuildUser mention) 
         {
             try
@@ -160,7 +172,7 @@ namespace Discord_NetCore.Modules
         }
 
 
-        [Command("addall"), Summary("Add a user to the bank")]
+        [Command("addall"), Summary("Add a user to the bank. Requires bot ownership.")]
         public async Task AddAll()
         {
             try
