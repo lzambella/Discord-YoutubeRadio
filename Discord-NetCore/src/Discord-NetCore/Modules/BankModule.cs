@@ -52,7 +52,7 @@ namespace Discord_NetCore.Modules
                 foreach (var user in users)
                 {
                     var points = await _database.GetPoints(user.Id.ToString(), user.GuildId.ToString());
-                    dict.Add(user.Nickname, points);
+                    dict.Add(user.Nickname ?? user.Username, points);
                 }
                 int x = 0;
                 foreach (var i in dict.OrderByDescending(i => i.Value))
