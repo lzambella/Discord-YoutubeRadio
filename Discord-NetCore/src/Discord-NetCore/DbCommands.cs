@@ -152,6 +152,7 @@ namespace Discord_NetCore
         /// <param name="discordId"></param>
         /// <returns></returns>
         /// deprecated
+        [Obsolete("Use other method instead")]
         public async Task<int> GetPermission(string discordId)
         {
             try
@@ -309,10 +310,14 @@ namespace Discord_NetCore
             }
         }
 
+        private async Task DeleteServer(string serverId)
+        {
+            var sql = "DELETE FROM MasterList WHERE serverId = @id";
+            var command = new SqlCommand(sql, Connection);
+            command.Parameters.Add(new SqlParameter("id", $"{serverId}"));
+            await command.ExecuteNonQueryAsync();
+        }
 
-        // TODO: update the points for all people in all servers
-        // Perhaps create flags for each server that trigger how users get points
-        // Also make it check the current minute from the system clock instead of keeping track in a database (old method for when the bot restarted every 5 minutes)
         private async void PointIncrementer(Object StateInfo)
         {
             try
@@ -334,6 +339,7 @@ namespace Discord_NetCore
                 }
                 if (minute >= 10)
                 {
+                    Console.WriteLine($"{DateTime.Now}: It's Time! Adding points!");
                     // Get the master server list
                     var sql = "SELECT * FROM MasterList";
                     command = new SqlCommand(sql, Connection);
@@ -346,37 +352,47 @@ namespace Discord_NetCore
 
                     foreach (var serverId in serverList)
                     {
-                        var fixedId = ulong.Parse(serverId.Substring(15));
-                        var channels = Program.Client.GetGuild(fixedId).VoiceChannels;
-                        var users = new List<IGuildUser>();
-                        foreach (var channel in channels)
+                        try
                         {
-                            foreach (var user in channel.Users)
+                            var users = new List<IGuildUser>();
+                            var fixedId = ulong.Parse(serverId.Substring(15));
+                            var channels = Program.Client.GetGuild(fixedId).VoiceChannels;
+                            foreach (var channel in channels)
                             {
-                                users.Add(user); //ineffecient code
+                                foreach (var user in channel.Users)
+                                {
+                                    users.Add(user); //ineffecient code
+                                }
                             }
-                        }
-                        Console.WriteLine($"{DateTime.Now}: It's Time! Adding points!");
-                        foreach (var user in users)
-                        {
-                            if (SkipIncrement(user))
-                                continue;
+                            foreach (var user in users)
+                            {
+                                if (SkipIncrement(user))
+                                    continue;
 
-                            var userId = ParseString(user.Mention);
-                            //var permission = await GetRank(userId);
-                            var points = 1;
-                            if (points < 1) points = 1;
-                            command =
-                                new SqlCommand($"UPDATE DISCORD_SERVER_{fixedId} SET Points = Points + @points WHERE UserId = @id",
-                                    Connection);
-                            //command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
-                            command.Parameters.Add(new SqlParameter("id", userId));
-                            command.Parameters.Add(new SqlParameter("points", points));
+                                var userId = ParseString(user.Mention);
+                                //var permission = await GetRank(userId);
+                                var points = 1;
+                                if (points < 1) points = 1;
+                                command =
+                                    new SqlCommand($"UPDATE DISCORD_SERVER_{fixedId} SET Points = Points + @points WHERE UserId = @id",
+                                        Connection);
+                                //command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
+                                command.Parameters.Add(new SqlParameter("id", userId));
+                                command.Parameters.Add(new SqlParameter("points", points));
+                                await command.ExecuteNonQueryAsync();
+                            }
+                            command = new SqlCommand("UPDATE Timer SET Minute = 0 WHERE Name = @0", Connection);
+                            command.Parameters.Add(new SqlParameter("0", "PointAccumulator"));
                             await command.ExecuteNonQueryAsync();
                         }
-                        command = new SqlCommand("UPDATE Timer SET Minute = 0 WHERE Name = @0", Connection);
-                        command.Parameters.Add(new SqlParameter("0", "PointAccumulator"));
-                        await command.ExecuteNonQueryAsync(); 
+                        catch (System.NullReferenceException e)
+                        {
+#if DEBUG
+                            Console.WriteLine(e);
+#endif
+                            Console.WriteLine("Error: Bot isn't in server anymore. Deleting server from list.");
+                            await DeleteServer(serverId);
+                        }
                     }
                 }
                 else

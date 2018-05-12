@@ -84,9 +84,16 @@ namespace Discord_NetCore.Modules
                 await ReplyAsync("I am currently not in a voice channel.");
             else
             {
-                await audioPlayer.AddToQueue(url, Context);
+                var song = await audioPlayer.AddToQueue(url, Context);
                 await Context.Message.DeleteAsync();
-                await ReplyAsync("Added the song to the queue.");
+                var embedded = new EmbedBuilder()
+                    .WithTitle($"New Song added!")
+                    .WithAuthor($"{Program.botName}'s Funky Roulette!")
+                    .WithCurrentTimestamp()
+                    .AddField("Song Title", $"{song.Title}")
+                    .AddField("Duration", $"{song.Length}")
+                    .WithUrl($"{song.Url}");
+                await ReplyAsync("", embed:embedded);
             }
 
             if (audioPlayer.AutoPlay && audioPlayer.AudioFree)

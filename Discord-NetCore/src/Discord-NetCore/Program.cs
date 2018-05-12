@@ -172,7 +172,7 @@ namespace Discord_NetCore
             // rather an object stating if the command executed succesfully)
             var result = await commands.ExecuteAsync(context, argPos);
             if (result.IsSuccess)
-                Console.WriteLine($"{DateTime.Now}: Command request from {messageParam.Author.Username}. Command: {messageParam.Content}.");
+                Console.WriteLine($"Command request from {messageParam.Author.Username}. Command: {messageParam.Content}.");
         }
         /// <summary>
         /// Posts a random meme to the chat if there is a new meme

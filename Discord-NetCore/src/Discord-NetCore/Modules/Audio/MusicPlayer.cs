@@ -320,17 +320,22 @@ namespace Discord_NetCore.Modules.Audio
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public async Task AddToQueue(string url, ICommandContext context)
+        public async Task<Song> AddToQueue(string url, ICommandContext context)
         {
             try
             {
                 var song = new Song(url, context);
                 await song.GetVideoInfo();
                 _songQueue.Enqueue(song);
+                return song;
             }
             catch (Exception e)
             {
+#if DEBUG
                 Console.WriteLine(e);
+#endif
+                Console.WriteLine("Something has gone wrong with adding a song.");
+                return null;
             }
         }
         public async Task AddFileToQueue(string path, ICommandContext context, bool isFile)

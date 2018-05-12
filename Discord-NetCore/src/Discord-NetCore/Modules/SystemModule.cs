@@ -11,36 +11,12 @@ namespace Discord_NetCore.Modules
     [Name("System")]
     public class SystemModule : ModuleBase
     {
-        //[Command("memory"), Summary("View avaliable memory")]
-        public async Task GetInfo()
-        {
-            var process = new Process
-            {
-                StartInfo =
-                {
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    FileName = "/usr/bin/free",
-                    Arguments = "-h"
-                }
-            };
-            process.Start();
-            var stdout = await process.StandardOutput.ReadToEndAsync();
-            string output = $"```{stdout}```";
-            await ReplyAsync(output);
-        }
 
         [Command("uptime"), Summary("Print how long the bot has been online")]
         public async Task uptime()
         {
             var time = (DateTime.Now - Process.GetCurrentProcess().StartTime);
-            await ReplyAsync($"I have been online for {time.ToString("hh:mm:ss")}");
-        }
-
-        //[Command("sysinfo"), Summary("Print system information")]
-        public async Task hw()
-        {
-            await Program.Client.SetStatusAsync(UserStatus.Invisible);
+            await ReplyAsync($"I have been online for {time.ToString("hhmmss")}");
         }
 
         [Command("help"), Summary("Prints help message")]

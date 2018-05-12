@@ -52,24 +52,12 @@ namespace Discord_NetCore.Modules
                 var images = await page.GetPhotos(fields, true);
                 var meme = images.PhotoNodes.First().Images.First().Source;
                 var embedded = new EmbedBuilder()
-                    .WithTitle("Gachi's funky memes")
+                    .WithTitle($"{Program.botName}'s funky memes")
                     .WithImageUrl(meme)
                     .WithFooter($"New meme in T-minus {((60 - DateTime.Now.Minute) % 30)} minutes.");
                 await ReplyAsync($"", embed:embedded);
             }
             catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-        }
-        [Command("checkmeme"), Summary("Time until a new meme is avaliable")]
-        public async Task CheckMeme()
-        {
-            try
-            {
-                var timeRemaining = ((60 - DateTime.Now.Minute) % 30);
-                await ReplyAsync($"Time until the next meme: `{timeRemaining}`");
-            } catch (Exception e)
             {
                 Console.WriteLine(e);
             }
