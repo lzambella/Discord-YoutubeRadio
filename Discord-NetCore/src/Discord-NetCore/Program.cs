@@ -144,14 +144,23 @@ namespace Discord_NetCore
             // Don't process the command if it was a System Message
             var message = messageParam as SocketUserMessage;
             if (message == null) return;
-            // Create a number to track where the prefix ends and the command begins
+            
             int argPos = 0;
+            // Check if the command is an operator command that overrides the chat channel rule
+            var context = new CommandContext(Client, message);
+            if (message.HasCharPrefix('#', ref argPos) && (message.Author.Id == OwnerId || await Database.GetPermission(Client.GetGuild(context.Guild.Id).GetUser(message.Author.Id)) == 5))
+            {
+                // Execute the command
+                var res = await commands.ExecuteAsync(context, argPos);
+                if (res.IsSuccess)
+                    Console.WriteLine($"Operator request from {messageParam.Author.Username}. Command: {messageParam.Content}.");
+            }
             // Determine if the message is a command, based on if it starts with '!' or a mention prefix
             if (!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(Client.CurrentUser, ref argPos))) return;
-            // Create a Command Context
-            var context = new CommandContext(Client, message);
-            // Execute the command. (result does not indicate a return value, 
-            // rather an object stating if the command executed succesfully)
+
+            var channelId = context.Channel.Id;
+            if (await Database.GetChatChannel(context.Guild) != (Int64)channelId) return; // If the command was not executed from the correct channel
+
             var result = await commands.ExecuteAsync(context, argPos);
             if (result.IsSuccess)
                 Console.WriteLine($"Command request from {messageParam.Author.Username}. Command: {messageParam.Content}.");

@@ -78,7 +78,7 @@ namespace Discord_NetCore
             {
                 await FixConnection();
                 var permission = 0;
-                var command = new SqlCommand("SELECT Rank FROM Users WHERE DiscordId = @id AND ServerId = @serverid",
+                var command = new SqlCommand("SELECT RankLevel FROM Users WHERE DiscordId = @id AND ServerId = @serverid",
                     Connection);
                 command.Parameters.Add(new SqlParameter("id", (Int64)user.Id));
                 command.Parameters.Add(new SqlParameter("serverId", (Int64)user.GuildId));
@@ -135,7 +135,7 @@ namespace Discord_NetCore
             try
             {
                 await FixConnection();
-                var command = new SqlCommand("UPDATE Users Set permlevel = @level WHERE DiscordId = @userid AND ServerId = @serverid", Connection);
+                var command = new SqlCommand("UPDATE Users Set PermLevel = @level WHERE DiscordId = @userid AND ServerId = @serverid", Connection);
                 command.Parameters.Add(new SqlParameter("level", permlevel));
                 command.Parameters.Add(new SqlParameter("userid", (Int64)user.Id));
                 command.Parameters.Add(new SqlParameter("serverid", (Int64)user.GuildId));
@@ -201,12 +201,13 @@ namespace Discord_NetCore
                 // If they dont exist then continue
                 command =
                     new SqlCommand(
-                        $"INSERT INTO Users (DiscordId, ServerId, PermLevel, RankLevel, MessageCount) VALUES (@id, @serverid, @perm, @rank, @MessageCount)", Connection);
+                        $"INSERT INTO Users (DiscordId, ServerId, PermLevel, RankLevel, MessageCount, Points) VALUES (@id, @serverid, @perm, @rank, @MessageCount, @points)", Connection);
                 command.Parameters.Add(new SqlParameter("id", (Int64) user.Id));
                 command.Parameters.Add(new SqlParameter("serverid", (Int64) user.GuildId));
                 command.Parameters.Add(new SqlParameter("perm", "0"));
                 command.Parameters.Add(new SqlParameter("rank", "0"));
                 command.Parameters.Add(new SqlParameter("MessageCount", "0"));
+                command.Parameters.Add(new SqlParameter("Points", "0"));
                 await command.ExecuteNonQueryAsync();
                 return true;
             }
@@ -474,15 +475,32 @@ namespace Discord_NetCore
         /// </summary>
         /// <param name="serverId"></param>
         /// <returns>True if the server was successfully created</returns>
-        public async Task<Boolean> AddServer(IGuild guild)
+        public async Task<int> AddServer(IGuild guild)
         {
             try
             {
-                return true;
+                // First check if the server already exists in the table
+                var sql = "SELECT ServerId FROM Servers WHERE ServerId = @id";
+                var command = new SqlCommand(sql, Connection);
+                command.Parameters.Add(new SqlParameter("id", (Int64)guild.Id));
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while(await reader.ReadAsync())
+                        if (reader[0] != null) return -2;
+                }
+
+                sql = "INSERT INTO Servers(ServerId, BotChatChannelId, AutoMemes) VALUES (@serverid, @chatid, 0)";
+                command = new SqlCommand(sql, Connection);
+                var channels = await guild.GetTextChannelsAsync();
+                command.Parameters.Add(new SqlParameter("serverid", (Int64)guild.Id));
+                command.Parameters.Add(new SqlParameter("chatid", (Int64)channels.First().Id)); // Sets the first known text channel as the default bot channel
+                return await command.ExecuteNonQueryAsync();
             } catch (Exception e)
             {
+#if DEBUG
                 Console.WriteLine(e);
-                return false;
+#endif
+                return -1;
             }
         }
 
@@ -499,11 +517,18 @@ namespace Discord_NetCore
             {
                 var sql = "SELECT BotChatChannelId FROM Servers WHERE ServerId = @serverid";
                 var command = new SqlCommand(sql, Connection);
-                command.Parameters.Add(new SqlParameter("serverid", guild.Id));
+                command.Parameters.Add(new SqlParameter("serverid", (Int64)guild.Id));
                 using (var reader = await command.ExecuteReaderAsync())
                 {
-                    await reader.ReadAsync();
-                    return Int64.Parse(reader[0].ToString());
+                    try
+                    {
+                        await reader.ReadAsync();
+                        return Int64.Parse(reader[0].ToString());
+                    } catch (Exception e)
+                    {
+                        Console.WriteLine("Error, no data.");
+                        return 0;
+                    }
                 }
             } catch (Exception e)
             {
@@ -538,6 +563,52 @@ namespace Discord_NetCore
                 Console.WriteLine(e);
 #endif
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Sets whether the bot should automatically post a meme in the server
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public async Task<int> SetAutoMemePosting(IGuild guild, bool status)
+        {
+            try
+            {
+                var sql = $"UPDATE Servers SET AutoMemes = {(status ? 1 : 0)} WHERE ServerId = @id";
+                var command = new SqlCommand(sql, Connection);
+                command.Parameters.Add(new SqlParameter("id", (Int64)guild.Id));
+                return await command.ExecuteNonQueryAsync();
+            } catch (Exception e)
+            {
+#if DEBUG
+                Console.WriteLine(e);
+#endif
+                return -1;
+            }
+        }
+
+        /// <summary>
+        /// Sets the channel id the bot is allowed to talk in 
+        /// </summary>
+        /// <param name="channel"></param>
+        /// <returns></returns>
+        public async Task<int> SetBotChatChannel(ITextChannel channel)
+        {
+            try
+            {
+                var sql = "UPDATE Servers SET BotChatChannelId = @chanid WHERE ServerId = @serverid";
+                var command = new SqlCommand(sql, Connection);
+                command.Parameters.Add(new SqlParameter("chanid", (Int64)channel.Id));
+                command.Parameters.Add(new SqlParameter("serverid", (Int64)channel.GuildId));
+                return await command.ExecuteNonQueryAsync();
+            } catch (Exception e)
+            {
+#if DEBUG
+                Console.WriteLine(e);
+#endif
+                return -1;
             }
         }
     }
