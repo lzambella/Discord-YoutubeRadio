@@ -8,17 +8,14 @@ using System.Threading.Tasks;
 
 namespace Discord_NetCore.Modules
 {
-    [Name("Management")]
+    [Name("Management"), Group("operator")]
     public class ManagementModule : ModuleBase
     {
-        //[Command("createteamchannel"), Summary("Creates a temporary voice channel that only a certain roll can enter")]
-        public async Task CreateTeamChannel([Summary("Name")]string name, [Summary("Duration in minutes")]int duration)
-        {
-        }
-     
+       
         [Command("check"), Summary("Check if required binaries are available")]
         public async Task CheckApps()
         {
+            if (!IsOperator()) return;
             try
             {
                 Process process = Process.Start(new ProcessStartInfo {
@@ -44,5 +41,11 @@ namespace Discord_NetCore.Modules
                 await Context.Channel.SendMessageAsync("youtube-dl error!");
             }
         }
+
+        private bool IsOperator()
+        {
+            return Context.User.Id == Program.OwnerId;
+        }
     }
+
 }

@@ -97,24 +97,6 @@ namespace Discord_NetCore
 
             await Client.StartAsync();
             await InstallCommands();
-            Client.MessageReceived += async (e) =>
-            {
-                try
-                {
-                    if (e.Content.Contains('[') && e.Author.Username.Contains("MemeBot"))
-                    {
-                        var str = e.Content.Trim('[', ']');
-                        var arr = str.Split(' ');
-                        var points = int.Parse(arr[1]);
-                        var user = arr[0];
-                        await Database.ChangePoints(user, points * -1);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                }
-            };
             Client.Connected +=  async () =>
             {
                 await Client.SetGameAsync("Bose of this gym.");
@@ -172,7 +154,7 @@ namespace Discord_NetCore
             // rather an object stating if the command executed succesfully)
             var result = await commands.ExecuteAsync(context, argPos);
             if (result.IsSuccess)
-                Console.WriteLine($"{DateTime.Now}: Command request from {messageParam.Author.Username}. Command: {messageParam.Content}.");
+                Console.WriteLine($"Command request from {messageParam.Author.Username}. Command: {messageParam.Content}.");
         }
         /// <summary>
         /// Posts a random meme to the chat if there is a new meme
