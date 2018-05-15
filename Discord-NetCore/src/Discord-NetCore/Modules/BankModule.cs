@@ -205,7 +205,7 @@ namespace Discord_NetCore.Modules
         {
             if (!(Context.User.Id == Program.OwnerId)) return;
             var database = Program.Database;
-            await database.AddServer(Context.Guild.Id.ToString());
+            await database.AddServer(Context.Guild);
             await ReplyAsync("Server added to the database");
         }
     }
