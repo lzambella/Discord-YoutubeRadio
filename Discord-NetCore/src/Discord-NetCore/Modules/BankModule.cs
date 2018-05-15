@@ -20,7 +20,7 @@ namespace Discord_NetCore.Modules
             try
             {
                 var userId = _database.ParseString(Context.User.Mention);
-                var points = await _database.GetPoints(userId, Context.Guild.Id.ToString());
+                var points = await _database.GetPoints(await Context.Guild.GetUserAsync(Context.User.Id));
                 var embedded = new EmbedBuilder()
                     .WithTitle(_bankTitle)
                     .WithColor(155, 165, 102)
@@ -38,7 +38,7 @@ namespace Discord_NetCore.Modules
             }
         }
 
-        [Command("leaderboard"), Summary("Check who has the most points.")]
+        //[Command("leaderboard"), Summary("Check who has the most points.")]
         public async Task PointLeaderboard()
         {
             try
@@ -51,7 +51,7 @@ namespace Discord_NetCore.Modules
                 var users = await Context.Guild.GetUsersAsync();
                 foreach (var user in users)
                 {
-                    var points = await _database.GetPoints(user.Id.ToString(), user.GuildId.ToString());
+                    var points = await _database.GetPoints(Context.User as IGuildUser);
                     dict.Add(user.Nickname ?? user.Username, points);
                 }
                 int x = 0;
@@ -164,17 +164,22 @@ namespace Discord_NetCore.Modules
             {
                 if (!(Context.User.Id == Program.OwnerId)) return;
                 var database = Program.Database;
-                await database.AddUser(mention, Context.Guild.Id.ToString());
-                await ReplyAsync($"Added {mention.Mention} to the bank.");
+                if (await database.AddUser(mention))
+                    await ReplyAsync($"Added {mention.Mention} to the bank.");
+                else
+                    await ReplyAsync("User was not added to the bank.");
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                await ReplyAsync("Error adding user to bank.");
+#if DEBUG
+                await ReplyAsync("Error adding user to bank. See logs for details");
+                Console.WriteLine(e);
+#endif
             }
         }
 
 
-        [Command("addall"), Summary("Add a user to the bank. Requires bot ownership.")]
+        [Command("addall"), Summary("Add the entire server to the bank.")]
         public async Task AddAll()
         {
             try
@@ -183,19 +188,19 @@ namespace Discord_NetCore.Modules
                 var users = await Context.Guild.GetUsersAsync();
                 var database = Program.Database;
                 foreach (var user in users)
-                {
-                    await database.AddUser(user, Context.Guild.Id.ToString());
-                }
+                    await database.AddUser(await Context.Guild.GetUserAsync(user.Id));
 
                 await ReplyAsync($"Added the server to the bank.");
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                await ReplyAsync("Error adding user to bank.");
+#if DEBUG
+                Console.WriteLine(e);
+#endif
             }
         }
 
-        [Command("AddToServer"), Summary("Add the current server to the bank (existing servers only)")]
+        //[Command("AddToServer"), Summary("Add the current server to the bank (existing servers only)")]
         public async Task AddServerToDatabase()
         {
             if (!(Context.User.Id == Program.OwnerId)) return;

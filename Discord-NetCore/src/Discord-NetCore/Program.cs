@@ -97,24 +97,6 @@ namespace Discord_NetCore
 
             await Client.StartAsync();
             await InstallCommands();
-            Client.MessageReceived += async (e) =>
-            {
-                try
-                {
-                    if (e.Content.Contains('[') && e.Author.Username.Contains("MemeBot"))
-                    {
-                        var str = e.Content.Trim('[', ']');
-                        var arr = str.Split(' ');
-                        var points = int.Parse(arr[1]);
-                        var user = arr[0];
-                        await Database.ChangePoints(user, points * -1);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                }
-            };
             Client.Connected +=  async () =>
             {
                 await Client.SetGameAsync("Bose of this gym.");

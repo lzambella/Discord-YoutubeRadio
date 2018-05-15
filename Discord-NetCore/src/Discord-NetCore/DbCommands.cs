@@ -35,45 +35,21 @@ namespace Discord_NetCore
                 Console.WriteLine("Error establishing a connection... Database commands disabled");
             }
         }
-        /*
-        public async Task<int> GetPoints(string discordId)
-        {
-            try
-            {
-                await FixConnection();
-                var points = 0;
-                var command = new SqlCommand("SELECT Points from DiscordUser WHERE DiscordId = @id", Connection);
-                command.Parameters.Add(new SqlParameter("id", discordId));
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (reader.Read())
-                    {
-                        points = int.Parse(reader[0].ToString());
-                    }
-                }
-                return points;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return 0;
-            }
-        }
-        */
         /// <summary>
         /// Gets points from a user in a certain server
         /// </summary>
         /// <param name="discordId"></param>
         /// <param name="serverId"></param>
         /// <returns></returns>
-        public async Task<int> GetPoints(string discordId, string serverId)
+        public async Task<int> GetPoints(IGuildUser user)
         {
             try
             {
                 await FixConnection();
                 var points = 0;
-                var command = new SqlCommand($"SELECT Points from DISCORD_SERVER_{ serverId } WHERE UserId = @id", Connection);
-                command.Parameters.Add(new SqlParameter("id", discordId));
+                var command = new SqlCommand($"SELECT Points from Users WHERE DiscordId = @id AND ServerId = @serverid", Connection);
+                command.Parameters.Add(new SqlParameter("id", (Int64)user.Id));
+                command.Parameters.Add(new SqlParameter("serverid", (Int64)user.GuildId));
 
                 using (var reader = await command.ExecuteReaderAsync())
                 {
@@ -90,78 +66,22 @@ namespace Discord_NetCore
                 return 0;
             }
         }
-
-        /// <param name="discordId">ID num only</param>
-        /// Obsolete
-        public async Task<int> GetRank(string discordId)
-        {
-            try
-            {
-                await FixConnection();
-                var permission = 0;
-                var command = new SqlCommand("SELECT RankLevel FROM DiscordUser WHERE DiscordId = @id",
-                    Connection);
-                command.Parameters.Add(new SqlParameter("id", discordId));
-                using (SqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (reader.Read())
-                        permission = int.Parse(reader[0].ToString());
-                }
-                return permission;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                return 0;
-            }
-        }
-
        /// <summary>
        /// Gets rank of someone from a server
        /// </summary>
        /// <param name="discordId"></param>
        /// <param name="serverId"></param>
        /// <returns></returns>
-        public async Task<int> GetRank(string discordId, string serverId)
+        public async Task<int> GetRank(IGuildUser user)
         {
             try
             {
                 await FixConnection();
                 var permission = 0;
-                var command = new SqlCommand("SELECT Rank FROM @serverId WHERE UserdId = @id",
+                var command = new SqlCommand("SELECT Rank FROM Users WHERE DiscordId = @id AND ServerId = @serverid",
                     Connection);
-                command.Parameters.Add(new SqlParameter("id", discordId));
-                command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
-                using (SqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (reader.Read())
-                        permission = int.Parse(reader[0].ToString());
-                }
-                return permission;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                return 0;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="discordId"></param>
-        /// <returns></returns>
-        /// deprecated
-        [Obsolete("Use other method instead")]
-        public async Task<int> GetPermission(string discordId)
-        {
-            try
-            {
-                await FixConnection();
-                var permission = 0;
-                var command = new SqlCommand("SELECT PermissionLevel FROM DiscordUser WHERE DiscordId = @id",
-                    Connection);
-                command.Parameters.Add(new SqlParameter("id", discordId));
+                command.Parameters.Add(new SqlParameter("id", (Int64)user.Id));
+                command.Parameters.Add(new SqlParameter("serverId", (Int64)user.GuildId));
                 using (SqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (reader.Read())
@@ -181,16 +101,16 @@ namespace Discord_NetCore
         /// <param name="discordId"></param>
         /// <param name="serverId"></param>
         /// <returns></returns>
-        public async Task<int> GetPermission(string discordId, string serverId)
+        public async Task<int> GetPermission(IGuildUser user)
         {
             try
             {
                 await FixConnection();
                 var permission = 0;
-                var command = new SqlCommand("SELECT PermLevel FROM @serverId WHERE UserId = @id",
+                var command = new SqlCommand("SELECT PermLevel FROM Users WHERE DiscordId = @id AND ServerId = @serverid",
                     Connection);
-                command.Parameters.Add(new SqlParameter("id", discordId));
-                command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
+                command.Parameters.Add(new SqlParameter("id", (Int64)user.Id));
+                command.Parameters.Add(new SqlParameter("serverId", (Int64)user.GuildId));
                 using (SqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (reader.Read())
@@ -204,41 +124,41 @@ namespace Discord_NetCore
                 return 0;
             }
         }
-
-        public async Task ChangePoints(string discordId, int value)
+        /// <summary>
+        /// Sets the permission level of a user in a server
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="permlevel"></param>
+        /// <returns></returns>
+        public async Task<int> SetPermission(IGuildUser user, int permlevel)
         {
             try
             {
                 await FixConnection();
-                var command =
-                    new SqlCommand("UPDATE DiscordUser SET GachiPoints = GachiPoints + @value WHERE DiscordId = @id", Connection);
-                command.Parameters.Add(new SqlParameter("value", value));
-                command.Parameters.Add(new SqlParameter("id", discordId));
-                await command.ExecuteNonQueryAsync();
-            }
-            catch (Exception e)
+                var command = new SqlCommand("UPDATE Users Set permlevel = @level WHERE DiscordId = @userid AND ServerId = @serverid", Connection);
+                command.Parameters.Add(new SqlParameter("level", permlevel));
+                command.Parameters.Add(new SqlParameter("userid", (Int64)user.Id));
+                command.Parameters.Add(new SqlParameter("serverid", (Int64)user.GuildId));
+                return await command.ExecuteNonQueryAsync();
+            } catch (Exception e)
             {
-                Console.WriteLine(e);
+                return -1;
             }
         }
-
         /// <summary>
         /// Directly change points from a user from a server
         /// </summary>
-        /// <param name="discordId"></param>
-        /// <param name="serverId"></param>
-        /// <param name="value"></param>
         /// <returns></returns>
-        public async Task ChangePoints(string discordId, string serverId, int value)
+        public async Task ChangePoints(IGuildUser user, int points)
         {
             try
             {
                 await FixConnection();
                 var command =
-                    new SqlCommand("UPDATE @serverId SET GachiPoints = GachiPoints + @value WHERE DiscordId = @id", Connection);
-                command.Parameters.Add(new SqlParameter("value", value));
-                command.Parameters.Add(new SqlParameter("id", discordId));
-                command.Parameters.Add(new SqlParameter("serverId", serverId));
+                    new SqlCommand("UPDATE Users SET points = points + @value WHERE DiscordId = @id AND ServerId = @serverid", Connection);
+                command.Parameters.Add(new SqlParameter("value", points));
+                command.Parameters.Add(new SqlParameter("id", (Int64) user.Id));
+                command.Parameters.Add(new SqlParameter("serverId", (Int64) user.GuildId));
                 await command.ExecuteNonQueryAsync();
             }
             catch (Exception e)
@@ -246,54 +166,55 @@ namespace Discord_NetCore
                 Console.WriteLine(e);
             }
         }
-        /*
-        public async Task AddUser(IGuildUser user)
-        {
-            try
-            {
-                await FixConnection();
-                var command =
-                    new SqlCommand(
-                        "INSERT INTO DiscordUser(DiscordId, GachiPoints, RankLevel, PermissionLevel, DiscordGuild) VALUES (@id, @points, @rank, @permission, @guild)");
-                command.Parameters.Add(new SqlParameter("id", user.Id));
-                command.Parameters.Add(new SqlParameter("points", 0));
-                command.Parameters.Add(new SqlParameter("rank", 0));
-                command.Parameters.Add(new SqlParameter("permission", 0));
-                command.Parameters.Add(new SqlParameter("guild", user.GuildId));
-                await command.ExecuteNonQueryAsync();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error adding user");
-                Console.WriteLine(e.StackTrace);
-            }
-        }
-        */
         /// <summary>
         /// Add a user to a server's database
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public async Task AddUser(IGuildUser user, string serverId)
+        public async Task<bool> AddUser(IGuildUser user)
         {
             try
             {
                 await FixConnection();
-                var command =
+
+                // First see if the userid/serverid pair exists
+                var command = new SqlCommand($"SELECT DiscordId, ServerId FROM Users WHERE DiscordId = @userid AND ServerId = @serverid", Connection);
+                command.Parameters.Add(new SqlParameter("userid", (Int64) user.Id));
+                command.Parameters.Add(new SqlParameter("serverid", (Int64) user.GuildId));
+                var results = new List<Int64>();
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while(await reader.ReadAsync())
+                    {
+                        results.Add(Int64.Parse(reader[0].ToString()));
+                    }
+                    if (results.Count > 0)
+                    {
+#if DEBUG
+                        Console.WriteLine("User already exists!");
+#endif
+                        return false;
+                    }
+                }
+                command.Dispose();
+
+                // If they dont exist then continue
+                command =
                     new SqlCommand(
-                        $"INSERT INTO DISCORD_SERVER_{serverId} (UserId, Points, PermLevel, Rank, MessageCount) VALUES (@id, @points, @rank, @permission, @MessageCount)", Connection);
-                //command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
-                command.Parameters.Add(new SqlParameter("id", user.Id.ToString()));
-                command.Parameters.Add(new SqlParameter("points", "0"));
+                        $"INSERT INTO Users (DiscordId, ServerId, PermLevel, RankLevel, MessageCount) VALUES (@id, @serverid, @perm, @rank, @MessageCount)", Connection);
+                command.Parameters.Add(new SqlParameter("id", (Int64) user.Id));
+                command.Parameters.Add(new SqlParameter("serverid", (Int64) user.GuildId));
+                command.Parameters.Add(new SqlParameter("perm", "0"));
                 command.Parameters.Add(new SqlParameter("rank", "0"));
-                command.Parameters.Add(new SqlParameter("permission", "0"));
                 command.Parameters.Add(new SqlParameter("MessageCount", "0"));
                 await command.ExecuteNonQueryAsync();
+                return true;
             }
             catch (Exception e)
             {
                 Console.WriteLine("Error adding user");
                 Console.WriteLine(e);
+                return false;
             }
         }
 
@@ -328,78 +249,38 @@ namespace Discord_NetCore
                     await Connection.OpenAsync();
                 }
 
-                var minute = 0;
-                var command = new SqlCommand("SELECT Minute FROM Timer WHERE Name = @0", Connection);
-                command.Parameters.Add(new SqlParameter("0", "PointAccumulator"));
-                //Console.WriteLine("Adding a minute!");
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (reader.Read())
-                        minute = int.Parse(reader[0].ToString());
-                }
-                if (minute >= 10)
+                if (((60 - DateTime.Now.Minute) % 10) == 0) // Every time ending in a zero will activate
                 {
                     Console.WriteLine($"{DateTime.Now}: It's Time! Adding points!");
                     // Get the master server list
-                    var sql = "SELECT * FROM MasterList";
-                    command = new SqlCommand(sql, Connection);
-                    var serverList = new List<string>();
+                    var sql = "SELECT DiscordId, ServerId FROM Users";
+                    var command = new SqlCommand(sql, Connection);
+                    var serverList = new List<(ulong, ulong)>();
                     using (var reader = await command.ExecuteReaderAsync())
                     {
                         while (await reader.ReadAsync())
-                            serverList.Add(reader[0].ToString());
+                            serverList.Add( ( ulong.Parse(reader[0].ToString()), ulong.Parse(reader[1].ToString()) ) );
                     }
 
-                    foreach (var serverId in serverList)
+                    foreach (var r in serverList)
                     {
                         try
                         {
-                            var users = new List<IGuildUser>();
-                            var fixedId = ulong.Parse(serverId.Substring(15));
-                            var channels = Program.Client.GetGuild(fixedId).VoiceChannels;
-                            foreach (var channel in channels)
+                            var user = Program.Client.GetGuild(r.Item2).GetUser(r.Item1);
+                            if (user.VoiceChannel != null)
                             {
-                                foreach (var user in channel.Users)
-                                {
-                                    users.Add(user); //ineffecient code
-                                }
-                            }
-                            foreach (var user in users)
-                            {
-                                if (SkipIncrement(user))
-                                    continue;
-
-                                var userId = ParseString(user.Mention);
-                                //var permission = await GetRank(userId);
-                                var points = 1;
-                                if (points < 1) points = 1;
-                                command =
-                                    new SqlCommand($"UPDATE DISCORD_SERVER_{fixedId} SET Points = Points + @points WHERE UserId = @id",
-                                        Connection);
-                                //command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
-                                command.Parameters.Add(new SqlParameter("id", userId));
-                                command.Parameters.Add(new SqlParameter("points", points));
-                                await command.ExecuteNonQueryAsync();
-                            }
-                            command = new SqlCommand("UPDATE Timer SET Minute = 0 WHERE Name = @0", Connection);
-                            command.Parameters.Add(new SqlParameter("0", "PointAccumulator"));
-                            await command.ExecuteNonQueryAsync();
+                                if (SkipIncrement(user)) continue;
+                                await ChangePoints(user, 1);
+                            }                               
                         }
-                        catch (System.NullReferenceException e)
+                        catch (NullReferenceException e)
                         {
 #if DEBUG
                             Console.WriteLine(e);
+                            Console.WriteLine("Error: skipping user");
 #endif
-                            Console.WriteLine("Error: Bot isn't in server anymore. Deleting server from list.");
-                            await DeleteServer(serverId);
                         }
                     }
-                }
-                else
-                {
-                    command = new SqlCommand("UPDATE Timer SET Minute = Minute + 1 WHERE Name = @0", Connection);
-                    command.Parameters.Add(new SqlParameter("0", "PointAccumulator"));
-                    await command.ExecuteNonQueryAsync();
                 }
             }
             catch (Exception ex)
@@ -589,20 +470,73 @@ namespace Discord_NetCore
         }
 
         /// <summary>
-        /// Creates a new server entry by firsting adding the id to the master list and then creating a new table for that server
+        /// Adds a server to the Servers Table which allows for serverwide configuration
         /// </summary>
         /// <param name="serverId"></param>
         /// <returns>True if the server was successfully created</returns>
-        public async Task<Boolean> AddServer(string serverId)
+        public async Task<Boolean> AddServer(IGuild guild)
         {
             try
             {
-                await CreateTableForServer(serverId);
-                await AddToMasterList(serverId);
                 return true;
             } catch (Exception e)
             {
                 Console.WriteLine(e);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get the channel id that the bot should only be allowed to talk in
+        /// this can be useless if the bot is only allowed access to a certain channel but acts as a alternative method
+        /// Otherwise this is the channel the bot will post new memes if enabled
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <returns></returns>
+        public async Task<Int64> GetChatChannel(IGuild guild)
+        {
+            try
+            {
+                var sql = "SELECT BotChatChannelId FROM Servers WHERE ServerId = @serverid";
+                var command = new SqlCommand(sql, Connection);
+                command.Parameters.Add(new SqlParameter("serverid", guild.Id));
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    await reader.ReadAsync();
+                    return Int64.Parse(reader[0].ToString());
+                }
+            } catch (Exception e)
+            {
+#if DEBUG
+                Console.WriteLine(e);
+#endif
+                return -1;
+            }
+        }
+
+        /// <summary>
+        /// Gets the status of the automatic meme poster for a server
+        /// The memes are pulled form shitpostbot2000
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <returns></returns>
+        public async Task<bool> GetAutoMemePosting(IGuild guild)
+        {
+            try
+            {
+                var sql = "SELECT AutoMemes FROM Servers WHERE ServerId = @serverid";
+                var command = new SqlCommand(sql, Connection);
+                command.Parameters.Add(new SqlParameter("serverid", guild.Id));
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    await reader.ReadAsync();
+                    return bool.Parse(reader[0].ToString());
+                }
+            } catch (Exception e)
+            {
+#if DEBUG
+                Console.WriteLine(e);
+#endif
                 return false;
             }
         }

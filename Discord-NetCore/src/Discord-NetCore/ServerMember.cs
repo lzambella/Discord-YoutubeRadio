@@ -5,7 +5,4 @@ using System.Text;
 namespace Discord_NetCore
 {
 
-    class ServerMember
-    {
-    }
 }
