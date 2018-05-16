@@ -23,7 +23,6 @@ namespace Discord_NetCore
             try
             {
                 Connection = new SqlConnection(connectionString);
-                Connection.Open();
                 Console.WriteLine($"{DateTime.Now}: Connected to database.");
                 // Start the Point Incrementation Timer
                 timer = new Timer(PointIncrementer, null, 6000, 60000);
@@ -76,6 +75,7 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
                 await FixConnection();
                 var permission = 0;
                 var command = new SqlCommand("SELECT RankLevel FROM Users WHERE DiscordId = @id AND ServerId = @serverid",
@@ -87,10 +87,12 @@ namespace Discord_NetCore
                     while (reader.Read())
                         permission = int.Parse(reader[0].ToString());
                 }
+                Connection.Close();
                 return permission;
             }
             catch (Exception ex)
             {
+                Connection.Close();
                 Console.WriteLine(ex);
                 return 0;
             }
@@ -105,6 +107,7 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
                 await FixConnection();
                 var permission = 0;
                 var command = new SqlCommand("SELECT PermLevel FROM Users WHERE DiscordId = @id AND ServerId = @serverid",
@@ -116,10 +119,12 @@ namespace Discord_NetCore
                     while (reader.Read())
                         permission = int.Parse(reader[0].ToString());
                 }
+                Connection.Close();
                 return permission;
             }
             catch (Exception ex)
             {
+                Connection.Close();
                 Console.WriteLine(ex);
                 return 0;
             }
@@ -134,14 +139,18 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
                 await FixConnection();
                 var command = new SqlCommand("UPDATE Users Set PermLevel = @level WHERE DiscordId = @userid AND ServerId = @serverid", Connection);
                 command.Parameters.Add(new SqlParameter("level", permlevel));
                 command.Parameters.Add(new SqlParameter("userid", (Int64)user.Id));
                 command.Parameters.Add(new SqlParameter("serverid", (Int64)user.GuildId));
-                return await command.ExecuteNonQueryAsync();
+                var x = await command.ExecuteNonQueryAsync();
+                Connection.Close();
+                return x;
             } catch (Exception e)
             {
+                Connection.Close();
                 return -1;
             }
         }
@@ -153,6 +162,7 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
                 await FixConnection();
                 var command =
                     new SqlCommand("UPDATE Users SET points = points + @value WHERE DiscordId = @id AND ServerId = @serverid", Connection);
@@ -160,9 +170,11 @@ namespace Discord_NetCore
                 command.Parameters.Add(new SqlParameter("id", (Int64) user.Id));
                 command.Parameters.Add(new SqlParameter("serverId", (Int64) user.GuildId));
                 await command.ExecuteNonQueryAsync();
+                Connection.Close();
             }
             catch (Exception e)
             {
+                Connection.Close();
                 Console.WriteLine(e);
             }
         }
@@ -175,8 +187,8 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
                 await FixConnection();
-
                 // First see if the userid/serverid pair exists
                 var command = new SqlCommand($"SELECT DiscordId, ServerId FROM Users WHERE DiscordId = @userid AND ServerId = @serverid", Connection);
                 command.Parameters.Add(new SqlParameter("userid", (Int64) user.Id));
@@ -190,6 +202,7 @@ namespace Discord_NetCore
                     }
                     if (results.Count > 0)
                     {
+                        Connection.Close();
 #if DEBUG
                         Console.WriteLine("User already exists!");
 #endif
@@ -209,10 +222,12 @@ namespace Discord_NetCore
                 command.Parameters.Add(new SqlParameter("MessageCount", "0"));
                 command.Parameters.Add(new SqlParameter("Points", "0"));
                 await command.ExecuteNonQueryAsync();
+                Connection.Close();
                 return true;
             }
             catch (Exception e)
             {
+                Connection.Close();
                 Console.WriteLine("Error adding user");
                 Console.WriteLine(e);
                 return false;
@@ -244,6 +259,7 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
                 if (Connection.State == System.Data.ConnectionState.Broken)
                 {
                     Connection.Close();
@@ -283,9 +299,11 @@ namespace Discord_NetCore
                         }
                     }
                 }
+                Connection.Close();
             }
             catch (Exception ex)
             {
+                Connection.Close();
                 Console.WriteLine(ex);
             }
         }
@@ -391,6 +409,7 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
                 var sql = $"CREATE TABLE DISCORD_SERVER_{serverId} (" +
                   $"UserId varchar(255)," +
                   $"Points int," +
@@ -400,9 +419,11 @@ namespace Discord_NetCore
                 var command = new SqlCommand(sql, Connection);
                 //command.Parameters.Add(new SqlParameter("serverId", $"DISCORD_SERVER_{serverId}"));
                 await command.ExecuteNonQueryAsync();
+                Connection.Close();
             }
             catch (Exception e)
             {
+                Connection.Close();
                 Console.WriteLine("Error.");
                 Console.WriteLine(e);
                 throw;
@@ -479,6 +500,8 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
+                await FixConnection();
                 // First check if the server already exists in the table
                 var sql = "SELECT ServerId FROM Servers WHERE ServerId = @id";
                 var command = new SqlCommand(sql, Connection);
@@ -494,9 +517,12 @@ namespace Discord_NetCore
                 var channels = await guild.GetTextChannelsAsync();
                 command.Parameters.Add(new SqlParameter("serverid", (Int64)guild.Id));
                 command.Parameters.Add(new SqlParameter("chatid", (Int64)channels.First().Id)); // Sets the first known text channel as the default bot channel
-                return await command.ExecuteNonQueryAsync();
+                var x = await command.ExecuteNonQueryAsync();
+                Connection.Close();
+                return x;
             } catch (Exception e)
             {
+                Connection.Close();
 #if DEBUG
                 Console.WriteLine(e);
 #endif
@@ -515,6 +541,8 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
+                await FixConnection();
                 var sql = "SELECT BotChatChannelId FROM Servers WHERE ServerId = @serverid";
                 var command = new SqlCommand(sql, Connection);
                 command.Parameters.Add(new SqlParameter("serverid", (Int64)guild.Id));
@@ -523,15 +551,18 @@ namespace Discord_NetCore
                     try
                     {
                         await reader.ReadAsync();
+                        Connection.Close();
                         return Int64.Parse(reader[0].ToString());
                     } catch (Exception e)
                     {
+                        Connection.Close();
                         Console.WriteLine("Error, no data.");
                         return 0;
                     }
                 }
             } catch (Exception e)
             {
+                Connection.Close();
 #if DEBUG
                 Console.WriteLine(e);
 #endif
@@ -549,16 +580,20 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
+                await FixConnection();
                 var sql = "SELECT AutoMemes FROM Servers WHERE ServerId = @serverid";
                 var command = new SqlCommand(sql, Connection);
                 command.Parameters.Add(new SqlParameter("serverid", guild.Id));
                 using (var reader = await command.ExecuteReaderAsync())
                 {
                     await reader.ReadAsync();
+                    Connection.Close();
                     return bool.Parse(reader[0].ToString());
                 }
             } catch (Exception e)
             {
+                Connection.Close();
 #if DEBUG
                 Console.WriteLine(e);
 #endif
@@ -576,12 +611,17 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
+                await FixConnection();
                 var sql = $"UPDATE Servers SET AutoMemes = {(status ? 1 : 0)} WHERE ServerId = @id";
                 var command = new SqlCommand(sql, Connection);
                 command.Parameters.Add(new SqlParameter("id", (Int64)guild.Id));
-                return await command.ExecuteNonQueryAsync();
+                var x = await command.ExecuteNonQueryAsync();
+                Connection.Close();
+                return x;
             } catch (Exception e)
             {
+                Connection.Close();
 #if DEBUG
                 Console.WriteLine(e);
 #endif
@@ -598,13 +638,19 @@ namespace Discord_NetCore
         {
             try
             {
+                await Connection.OpenAsync();
+                await FixConnection();
                 var sql = "UPDATE Servers SET BotChatChannelId = @chanid WHERE ServerId = @serverid";
                 var command = new SqlCommand(sql, Connection);
                 command.Parameters.Add(new SqlParameter("chanid", (Int64)channel.Id));
                 command.Parameters.Add(new SqlParameter("serverid", (Int64)channel.GuildId));
-                return await command.ExecuteNonQueryAsync();
+                var x = await command.ExecuteNonQueryAsync();
+                Connection.Close();
+                return x;
+
             } catch (Exception e)
             {
+                Connection.Close();
 #if DEBUG
                 Console.WriteLine(e);
 #endif
