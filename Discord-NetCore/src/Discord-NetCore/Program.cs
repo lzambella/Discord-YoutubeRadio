@@ -40,6 +40,13 @@ namespace Discord_NetCore
         /// Dictionary of all the arguments
         /// </summary>
         public static Dictionary<string, string> argv = new Dictionary<string, string>();
+        /// <summary>
+        /// TODO:
+        /// Key value pair for quickly getting the channel the bot responds to
+        /// reduces database calls
+        /// </summary>
+        public static Dictionary<ulong, ulong> BotChatChannel = new Dictionary<ulong, ulong>();
+
         public static Modules.Audio.MusicPlayer Player { get; set; }
         public static IList<TempVoice> TempVoiceChannels { get; set; } = new List<TempVoice>();
         /// <summary>
