@@ -44,7 +44,7 @@ namespace Discord_NetCore
         {
             try
             {
-                await FixConnection();
+                await Connection.OpenAsync();
                 var points = 0;
                 var command = new SqlCommand($"SELECT Points from Users WHERE DiscordId = @id AND ServerId = @serverid", Connection);
                 command.Parameters.Add(new SqlParameter("id", (Int64)user.Id));
@@ -57,10 +57,12 @@ namespace Discord_NetCore
                         points = int.Parse(reader[0].ToString());
                     }
                 }
+                Connection.Close();
                 return points;
             }
             catch (Exception e)
             {
+                Connection.Close();
                 Console.WriteLine(e);
                 return 0;
             }
@@ -240,6 +242,7 @@ namespace Discord_NetCore
         /// <returns></returns>
         public async Task FixConnection()
         {
+            return;
             if (Connection.State == System.Data.ConnectionState.Broken)
             {
                 Connection.Close();
@@ -260,11 +263,6 @@ namespace Discord_NetCore
             try
             {
                 await Connection.OpenAsync();
-                if (Connection.State == System.Data.ConnectionState.Broken)
-                {
-                    Connection.Close();
-                    await Connection.OpenAsync();
-                }
 
                 if (((60 - DateTime.Now.Minute) % 10) == 0) // Every time ending in a zero will activate
                 {
@@ -551,11 +549,13 @@ namespace Discord_NetCore
                     try
                     {
                         await reader.ReadAsync();
+                        var x = Int64.Parse(reader[0].ToString());
                         Connection.Close();
-                        return Int64.Parse(reader[0].ToString());
+                        return x;
                     } catch (Exception e)
                     {
                         Connection.Close();
+                        Console.WriteLine(e); 
                         Console.WriteLine("Error, no data.");
                         return 0;
                     }
@@ -588,8 +588,9 @@ namespace Discord_NetCore
                 using (var reader = await command.ExecuteReaderAsync())
                 {
                     await reader.ReadAsync();
+                    var b = bool.Parse(reader[0].ToString());
                     Connection.Close();
-                    return bool.Parse(reader[0].ToString());
+                    return b;
                 }
             } catch (Exception e)
             {
