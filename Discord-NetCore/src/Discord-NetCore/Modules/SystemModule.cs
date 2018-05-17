@@ -13,7 +13,7 @@ namespace Discord_NetCore.Modules
     {
 
         [Command("uptime"), Summary("Print how long the bot has been online")]
-        public async Task uptime()
+        public async Task Uptime()
         {
             var time = (DateTime.Now - Process.GetCurrentProcess().StartTime);
             await ReplyAsync($"I have been online for {time.ToString("hhmmss")}");
@@ -96,6 +96,76 @@ namespace Discord_NetCore.Modules
                 if (x != -1) await ReplyAsync("I will only respond in this channel from now on");
                 else await ReplyAsync("Error. Something has gone wrong");
             }
+
+            // Update the server-sided dictionary
+            if (Program.BotChatChannel.Any(i => i.Key == Context.Guild.Id))
+            {
+                Program.BotChatChannel.Remove(Context.Guild.Id);
+                Program.BotChatChannel.Add(Context.Guild.Id, Context.Channel.Id);
+            }
+            else
+                Program.BotChatChannel.Add(Context.Guild.Id, Context.Channel.Id);
+        }
+
+        [Command("SetPerm"), Summary("Set the bot permission level of someone.")]
+        public async Task SetPermission([Summary("The user to change the perm level of")]IUser mention, [Summary("Permission level (1-5)")]int permlevel)
+        {
+            try
+            {
+                var userPerm = await Program.Database.GetPermission(Context.User as IGuildUser);
+                if (permlevel == 5 || Context.User.Id == Program.OwnerId)
+                {
+                    var p = permlevel;
+                    if (permlevel > 5) p = 5;
+                    else if (permlevel < 1) p = 1;
+
+                    var user = await Context.Guild.GetUserAsync(mention.Id);
+                    var x = await Program.Database.SetPermission(user, p);
+                    if (x != -1) await ReplyAsync("User's permission has been set");
+                    else await ReplyAsync("User's permission has not been set");
+                }
+            } catch (Exception e)
+            {
+#if DEBUG
+                Console.WriteLine(e);
+#endif
+            }
+        }
+        [Command("check"), Summary("Check if required binaries are available")]
+        public async Task CheckApps()
+        {
+            if (!IsOperator()) return;
+            try
+            {
+                Process process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "ffmpeg"
+                });
+                process.Start();
+                await Context.Channel.SendMessageAsync("FFMPEG found!");
+            }
+            catch (System.IO.FileNotFoundException)
+            {
+                await Context.Channel.SendMessageAsync("FFMPEG not found!");
+            }
+            try
+            {
+                Process process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "youtube-dl"
+                });
+                process.Start();
+                await Context.Channel.SendMessageAsync("youtube-dl found!");
+            }
+            catch (System.IO.FileNotFoundException)
+            {
+                await Context.Channel.SendMessageAsync("youtube-dl error!");
+            }
+        }
+
+        private bool IsOperator()
+        {
+            return Context.User.Id == Program.OwnerId;
         }
     }
 }

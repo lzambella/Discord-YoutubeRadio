@@ -38,7 +38,7 @@ namespace Discord_NetCore.Modules
             }
         }
 
-        //[Command("leaderboard"), Summary("Check who has the most points.")]
+        [Command("leaderboard"), Summary("Check who has the most points.")]
         public async Task PointLeaderboard()
         {
             try
@@ -68,92 +68,6 @@ namespace Discord_NetCore.Modules
 #if DEBUG
                 Console.WriteLine(ex);
 #endif
-            }
-        }
-        /*
-        [Command("promote"), Summary("Spend some points to level up and get even more points.")]
-        public async Task Promote()
-        {
-            var user = Program.Database.ParseString(Context.User.Mention);
-            var points = await Program.Database.GetPoints(user);
-            var permission = await Program.Database.GetRank(user);
-            var requiredPoints = (int)(Math.Pow(permission + 1, 2) + 5 * (permission + 1));
-            if (points < requiredPoints)
-                await
-                    ReplyAsync($"You don't have enough points. You need {requiredPoints} points.");
-            else
-            {
-                var command =
-                    new SqlCommand("UPDATE DiscordUser SET RankLevel = @perm WHERE DiscordId = @id",
-                        Program.Database.Connection);
-                command.Parameters.Add(new SqlParameter("perm", permission + 1));
-                command.Parameters.Add(new SqlParameter("id", user));
-                await command.ExecuteNonQueryAsync();
-                await Program.Database.ChangePoints(user, requiredPoints * -1);
-                await ReplyAsync($"Promoted to level {permission + 1}");
-            }
-        }
-        */
-        /*
-        [Command("exchange"), Summary("Convert your points to carlin coins(TM)")]
-        public async Task Exchange(string amount)
-        {
-            try
-            {
-                var points = int.Parse(amount);
-                Console.WriteLine(points);
-                var user = Program.Database.ParseString(Context.User.Mention);
-                Console.WriteLine(user);
-                if (await Program.Database.GetPoints(user) < points)
-                    await ReplyAsync("You don't have that many points!");
-                else
-                {
-                    var bot = Program.Client.GetGuild(215339016755740673).GetUser(215688935030915073);
-                    var channel = await bot.CreateDMChannelAsync();
-                    await channel.SendMessageAsync($"[{user} {points}]");
-                }
-            } catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-
-
-        }
-        */
-        //[Command("rankleaderboard"), Summary("Check rank leader board")]
-        public async Task Rank()
-        {
-            try
-            {
-                var board = "";
-                var command =
-                    new SqlCommand(
-                        "SELECT DiscordId, RankLevel FROM @serverId ORDER BY Rank DESC",
-                        Program.Database.Connection);
-                command.Parameters.Add(new SqlParameter("serverId", Context.Guild.Id.ToString()));
-                board += "```";
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (reader.Read())
-                    {
-                        try
-                        {
-                            board +=
-                                $"{Context.Channel.GetUserAsync(ulong.Parse(reader[0].ToString())).Result.Username} : Level {reader[1]}\n";
-
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex);
-                        }
-                    }
-                }
-                board += "```";
-                await ReplyAsync(board);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
             }
         }
 
