@@ -332,71 +332,7 @@ namespace Discord_NetCore
         {
             return user.IsBot || user.IsSelfDeafened || user.IsDeafened;
         }
-        /// <summary>
-        /// Get the XY Coordinates of a player
-        /// </summary>
-        /// <returns>Tuple that contains the x coord as item1, y coord as item2</returns>
-        public async Task<Tuple<int, int>> GetCoords(string discordId)
-        {
-            try
-            {
-                var sql = "SELECT XPOS, YPOS FROM RPG WHERE DiscordID = @id";
-                var command = new SqlCommand(sql, Connection);
-                command.Parameters.Add(new SqlParameter("id", discordId));
-                var x = 0;
-                var y = 0;
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    // Should read only once
-                    await reader.ReadAsync();
-                    x = int.Parse(reader[0].ToString());
-                    y = int.Parse(reader[1].ToString());
-                }
-                return new Tuple<int, int>(x, y);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return null;
-            }
-        }
-        /// <summary>
-        /// Get the specified object at the coordinates
-        /// </summary>
-        /// <param name="x">X Coordinate</param>
-        /// <param name="y">Y Coordinate</param>
-        /// <returns>List of RPGObjects containing the data</returns>
-        public async Task<List<RPGObject>> ObjectAtCoord(int x, int y)
-        {
-            // TODO: Create the object lookup table 
 
-            try
-            {
-                var objects = new List<RPGObject>();
-                var sql = $"SELECT * FROM WORLD WHERE XPOS = @x AND YPOS = @y";
-                var command = new SqlCommand(sql, Connection);
-                command.Parameters.Add(new SqlParameter("x", x));
-                command.Parameters.Add(new SqlParameter("y", y));
-
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        // TODO:
-                        var xpos = int.Parse(reader[1] as string);
-                        var ypos = int.Parse(reader[2] as string);
-                        var id = int.Parse(reader[3] as string);
-                        objects.Add(new RPGObject(xpos, ypos, id));
-                    }
-                }
-                return objects;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return null;
-            }
-        }
 
         /// <summary>
         /// Creates a new table for a new discord server

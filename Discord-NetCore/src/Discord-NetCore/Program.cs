@@ -111,6 +111,21 @@ namespace Discord_NetCore
                 Console.WriteLine($"Connected to {Client.Guilds.Count} servers!");
                 var Name = await Client.GetApplicationInfoAsync();
                 botName = Name.Name;
+                foreach (var guild in Client.Guilds)
+                {
+                    try
+                    {
+                        var chatId = await Database.GetChatChannel(guild);
+                        BotChatChannel.Add(guild.Id, (ulong)chatId);
+                    } catch (Exception e)
+                    {
+#if DEBUG
+                        Console.WriteLine(e);
+                        Console.WriteLine("Error: Server not found in the database");
+#endif
+                    }
+                }
+                Console.WriteLine("Chat channels found");
             };
 
             ///TODO: Deserialize all the playlists in the playlists folder
@@ -166,7 +181,7 @@ namespace Discord_NetCore
             if (!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(Client.CurrentUser, ref argPos))) return;
 
             var channelId = context.Channel.Id;
-            if (await Database.GetChatChannel(context.Guild) != (Int64)channelId) return; // If the command was not executed from the correct channel
+            if (BotChatChannel.First(i => i.Key == context.Guild.Id).Value != channelId) return; // If the command was not executed from the correct channel
 
             var result = await commands.ExecuteAsync(context, argPos);
             if (result.IsSuccess)
