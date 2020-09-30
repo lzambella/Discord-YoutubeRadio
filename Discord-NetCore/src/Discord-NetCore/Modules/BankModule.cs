@@ -37,7 +37,12 @@ namespace Discord_NetCore.Modules
                 await ReplyAsync("Something has gone wrong.");
             }
         }
-
+        //[Command("setpoints"), Summary("")]
+        public async Task GiveUserPoints(int num) {
+            var db = Program.Database;
+            await db.ChangePoints(Context.User as IGuildUser, num);
+            await ReplyAsync("Your points have been set cheater.");
+        }
         [Command("leaderboard"), Summary("Check who has the most points.")]
         public async Task PointLeaderboard()
         {
@@ -51,7 +56,7 @@ namespace Discord_NetCore.Modules
                 var users = await Context.Guild.GetUsersAsync();
                 foreach (var user in users)
                 {
-                    var points = await _database.GetPoints(Context.User as IGuildUser);
+                    var points = await _database.GetPoints(user);
                     dict.Add(user.Nickname ?? user.Username, points);
                 }
                 int x = 0;
@@ -200,13 +205,5 @@ namespace Discord_NetCore.Modules
             }
         }
 
-        //[Command("AddToServer"), Summary("Add the current server to the bank (existing servers only)")]
-        public async Task AddServerToDatabase()
-        {
-            if (!(Context.User.Id == Program.OwnerId)) return;
-            var database = Program.Database;
-            await database.AddServer(Context.Guild);
-            await ReplyAsync("Server added to the database");
-        }
     }
 }

@@ -73,24 +73,18 @@ namespace Discord_NetCore
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
+        public static string DatabaseString {get; set;}
+
         public async Task Start(string[] args)
         {
             var discordToken = Environment.GetEnvironmentVariable("discordToken");
-            var databaseString = Environment.GetEnvironmentVariable("databaseString");
+            DatabaseString = Environment.GetEnvironmentVariable("databaseString");
             FacebookToken = Environment.GetEnvironmentVariable("facebookToken");
-            if (discordToken.Length == 0) // if the environment variables cannot be found
-            {
-                for (int i = 0; i < args.Length; i++) 
-                {
-                    if (args[i] == "--discordToken") discordToken = args[i + 1].Replace("\"", "\0");
-                    else if (args[i] == "--databaseString") databaseString = args[i + 1].Replace("\"", "\0");
-                    else if (args[i] == "--facebookToken") FacebookToken = args[i + 1].Replace("\"", "\0");
-                }
-            }
             Console.WriteLine("Successfully read the settings");
-            Console.WriteLine($"{discordToken}\n{databaseString}\n{FacebookToken}");
             Console.WriteLine("Logging into server");
 
+            Database = new DbHandler(DatabaseString);
+            Console.WriteLine("Successfully initialized database");
             var config = new DiscordSocketConfig
             {
                 ConnectionTimeout = 100000
@@ -99,8 +93,6 @@ namespace Discord_NetCore
             commands = new CommandService();
 
             await Client.LoginAsync(TokenType.Bot, discordToken);
-
-            Database = new DbHandler(databaseString);
 
             await Client.StartAsync();
             await InstallCommands();

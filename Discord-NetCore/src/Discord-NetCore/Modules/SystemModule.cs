@@ -66,26 +66,6 @@ namespace Discord_NetCore.Modules
             }
         }
 
-        [Command("AddServer"), Summary("Adds the current server to the database. Operator only")]
-        public async Task AddServer()
-        {
-            try
-            {
-                if (Context.User.Id == Program.OwnerId || await Program.Database.GetRank(Context.User as IGuildUser) == 5)
-                {
-                    var x = await Program.Database.AddServer(Context.Guild);
-                    if (x != -1) await ReplyAsync("Added this server to the master server list. Now set the bot channel.");
-                    else if (x == -2) await ReplyAsync("This server has already been added");
-                    else if (x == -1) await ReplyAsync("Error. Something has gone wrong");
-                }
-            } catch (Exception e)
-            {
-#if DEBUG
-                Console.WriteLine(e);
-#endif
-                await ReplyAsync("Error adding the server");
-            }
-        }
 
         [Command("SetChannel"), Summary("Sets the current channel as the channel the bot will work in. Operator Only")]
         public async Task SetBotChannel()
