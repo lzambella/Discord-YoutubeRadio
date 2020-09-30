@@ -93,7 +93,7 @@ namespace Discord_NetCore.Modules
                     .AddField("Song Title", $"{song.Title}")
                     .AddField("Duration", $"{song.Length}")
                     .WithUrl($"{song.Url}");
-                await ReplyAsync("", embed:embedded);
+                await ReplyAsync("", embed:embedded.Build());
             }
 
             if (audioPlayer.AutoPlay && audioPlayer.AudioFree)
@@ -167,7 +167,7 @@ namespace Discord_NetCore.Modules
                     .AddField("Autoplay Status", audioPlayer.AutoPlay ? "Autoplay Enabled!" : "Autoplay Disabled!")
                     .AddField("Current Song", audioPlayer.CurrentSong == null ? "No song!" : $"{audioPlayer.CurrentSong.Title.Substring(0,20)} -- {audioPlayer.CurrentSong.Length}")
                     .AddField("Queue", $"{stringBuilder}");
-                await ReplyAsync("", embed: builder);
+                await ReplyAsync("", embed: builder.Build());
             }
         }
 

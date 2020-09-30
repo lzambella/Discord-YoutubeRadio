@@ -90,7 +90,7 @@ namespace Discord_NetCore
                 teamName = "Team 3";
             if (rolls.Any(r => r.Name == "Team 3"))
                 teamName = "Team 4";
-            _role = await Guild.CreateRoleAsync(teamName);
+            //_role = await Guild.CreateRoleAsync(teamName);
         }
 
         /// <summary>

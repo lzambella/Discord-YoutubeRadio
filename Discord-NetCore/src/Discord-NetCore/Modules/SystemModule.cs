@@ -45,7 +45,7 @@ namespace Discord_NetCore.Modules
                             .WithDescription(commandSummary)
                             .AddField("Usage", $"!{commandName} {paramString}")
                             .AddField("Aliases", $"{commandAlias}");
-                await ReplyAsync($"",embed:embedded);
+                await ReplyAsync($"",embed:embedded.Build());
             }
             else
             {
@@ -61,7 +61,7 @@ namespace Discord_NetCore.Modules
 
                     embedded.AddField($"{module.Name}", $"{builder}");
                 }
-                await ReplyAsync("", embed:embedded);
+                await ReplyAsync("", embed:embedded.Build());
 
             }
         }

@@ -39,27 +39,6 @@ namespace Discord_NetCore.Modules
                 await ReplyAsync(arr[rand]);
             }
         }
-        [Command("purge"), Summary("Delete a number of messages")]
-        public async Task Purge([Summary("Number of messages")]string s = null)
-        {
-            try
-            {
-                var user = Context.Message.Author as IGuildUser;
-                
-                if (user.Id == Program.OwnerId || user.Id == 157940364248875008)
-                {
-                    if (s == null)
-                        return;
-                    var num = Int32.Parse(s) + 1;
-                    var messages = await Context.Channel.GetMessagesAsync(num).Flatten();
-                    await Context.Channel.DeleteMessagesAsync(messages);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.StackTrace);
-            }
-        }
         /*
         [Command("spy"), Summary("Spy on someone's facebook page")]
         public async Task Spy([Summary("User id")] string id = null)

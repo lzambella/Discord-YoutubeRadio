@@ -144,7 +144,8 @@ namespace Discord_NetCore
             // Hook the MessageReceived Event into our Command Handler
             Client.MessageReceived += HandleCommand;
             // Discover all of the commands in this assembly and load them.
-            await commands.AddModulesAsync(Assembly.GetEntryAssembly());
+            await commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), 
+                                            services: null);
         }
         public async Task HandleCommand(SocketMessage messageParam)
         {
@@ -158,7 +159,9 @@ namespace Discord_NetCore
             if (message.HasCharPrefix('#', ref argPos) && (message.Author.Id == OwnerId || await Database.GetPermission(Client.GetGuild(context.Guild.Id).GetUser(message.Author.Id)) == 5))
             {
                 // Execute the command
-                var res = await commands.ExecuteAsync(context, argPos);
+                var res = await commands.ExecuteAsync(context: context, 
+                                                        argPos: argPos,
+                                                        services: null);
                 if (res.IsSuccess)
                     Console.WriteLine($"Operator request from {messageParam.Author.Username}. Command: {messageParam.Content}.");
             }
@@ -168,7 +171,9 @@ namespace Discord_NetCore
             var channelId = context.Channel.Id;
             if (await Database.GetChatChannel(context.Guild) != (Int64)channelId) return; // If the command was not executed from the correct channel
 
-            var result = await commands.ExecuteAsync(context, argPos);
+            var result = await commands.ExecuteAsync(context: context, 
+                                                        argPos: argPos,
+                                                        services: null);
             if (result.IsSuccess)
                 Console.WriteLine($"Command request from {messageParam.Author.Username}. Command: {messageParam.Content}.");
         }

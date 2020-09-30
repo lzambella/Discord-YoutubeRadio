@@ -27,7 +27,7 @@ namespace Discord_NetCore.Modules
                     .WithCurrentTimestamp()
                     .WithDescription("Check your Points")
                     .AddField($"{Context.User.Username}'s Points", $"{points}");
-                await ReplyAsync($"", embed: embedded);
+                await ReplyAsync($"", embed: embedded.Build());
             }
             catch (Exception e)
             {
@@ -38,7 +38,7 @@ namespace Discord_NetCore.Modules
             }
         }
 
-        //[Command("leaderboard"), Summary("Check who has the most points.")]
+        [Command("leaderboard"), Summary("Check who has the most points.")]
         public async Task PointLeaderboard()
         {
             try
@@ -61,7 +61,7 @@ namespace Discord_NetCore.Modules
                     embedded.AddField($"{i.Key}", $"{i.Value} Points");
                     x++;
                 }
-                await ReplyAsync("", embed: embedded);
+                await ReplyAsync("", embed: embedded.Build());
             }
             catch (Exception ex)
             {
@@ -120,7 +120,7 @@ namespace Discord_NetCore.Modules
 
         }
         */
-        //[Command("rankleaderboard"), Summary("Check rank leader board")]
+        [Command("rankleaderboard"), Summary("Check rank leader board")]
         public async Task Rank()
         {
             try

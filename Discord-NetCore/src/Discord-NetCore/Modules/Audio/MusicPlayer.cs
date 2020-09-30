@@ -96,7 +96,7 @@ namespace Discord_NetCore.Modules.Audio
         /// <returns></returns>
         public async Task MoveToVoiceChannel(IVoiceChannel chan)
         {
-            AudioClient = await chan.ConnectAsync(x => x.StreamCreated += StreamCreated);
+            AudioClient = await chan.ConnectAsync();
             ConnectedChannel = chan;
 
            
@@ -302,7 +302,7 @@ namespace Discord_NetCore.Modules.Audio
             }
             else
             {
-                var voiceUsers = await ConnectedChannel.GetUsersAsync().Flatten();
+                var voiceUsers = await ConnectedChannel.GetUsersAsync().FlattenAsync();
                 var requiredVotes = voiceUsers.Count(user => !user.IsBot) / 2; // Half the users in voice 
                 song.SkipVotes++;
                 song.UsersVoted.Add(context.User.Id);
@@ -359,7 +359,7 @@ namespace Discord_NetCore.Modules.Audio
         private async Task StreamAudio(string url, CancellationToken cancelToken)
         {
             Console.WriteLine("Youtube requested");
-            using (var stream = AudioClient.CreatePCMStream(AudioApplication.Mixed, 96000))
+            using (var stream = AudioClient.CreatePCMStream(application: AudioApplication.Mixed))
             {
                 try
                 {
@@ -376,7 +376,7 @@ namespace Discord_NetCore.Modules.Audio
                             FileName = "Binaries\\ffmpeg",
                             Arguments =
                              $"-i \"{url}\" " +
-                            " -ac 2 -f s16le -b:a 192k -ar 48000 pipe:1",
+                            " -ac 2 -f s16le -ar 48000 pipe:1",
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = false
@@ -397,6 +397,7 @@ namespace Discord_NetCore.Modules.Audio
                         #endif
                         _process = Process.Start(new ProcessStartInfo
                         {
+                            /*
                             FileName = "/bin/bash",
                             Arguments =
                              $"-c \"ffmpeg -i \'{url}\' " +
@@ -404,6 +405,12 @@ namespace Discord_NetCore.Modules.Audio
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = false
+                            */
+                            FileName = "/bin/bash",
+                            Arguments = $"youtube-dl.exe --hls-prefer-native -q -o - {url} | ffmpeg.exe -i - -f s16le -ar 48000 -ac 2 -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 10 pipe:1 -b:a 96K",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = false,
                         });
                     }
                     Console.WriteLine("Starting process...");
@@ -419,7 +426,7 @@ namespace Discord_NetCore.Modules.Audio
                             break;
 
                         byteCount = await _process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
-                        buffer = AdjustVolume(buffer, Volume);
+                        //buffer = AdjustVolume(buffer, Volume);
                         await stream.WriteAsync(buffer, 0, blockSize);
                     } while (byteCount > 0);
                     if (!WillSkip)
