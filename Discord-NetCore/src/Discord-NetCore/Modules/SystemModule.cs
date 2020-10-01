@@ -77,5 +77,17 @@ namespace Discord_NetCore.Modules
                 else await ReplyAsync("Error. Something has gone wrong");
             }
         }
+        [Command("giverut")]
+        public async Task GiveRutter(string nickMention) {
+            try {
+                var id = ulong.Parse(Program.Database.ParseString(nickMention));
+                var role = Context.Guild.Roles.FirstOrDefault(x => x.Name == "Rutter");
+                var user = await Context.Guild.GetUserAsync(id);
+                await user.AddRoleAsync(role);
+                await ReplyAsync("Giving that loser the rutter role!");
+            } catch (Exception e) {
+                Console.WriteLine(e);
+            }
+        }
     }
 }
